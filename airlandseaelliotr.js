@@ -18,13 +18,15 @@
 define([
     "dojo","dojo/_base/declare",
     "ebg/core/gamegui",
-    "ebg/counter"
+    "ebg/counter",
+    "ebg/stock"
 ],
 function (dojo, declare) {
     return declare("bgagame.airlandseaelliotr", ebg.core.gamegui, {
         constructor: function(){
             console.log('airlandseaelliotr constructor');
-              
+            this.cardwidth = 72;
+            this.cardheight = 96;
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
@@ -57,7 +59,23 @@ function (dojo, declare) {
             }
             
             // TODO: Set up your game interface here, according to "gamedatas"
-            
+ 
+            this.playerHand = new ebg.stock();
+            this.playerHand.create(this, $('myhand'), this.cardwidth, this.cardheight);
+            this.playerHand.image_items_per_row = 6;
+
+            // create cards types
+            for (let color = 1; color <= 3; color++) {
+                for (let value = 1; value <= 6; value++) {
+                    let card_type_id = this.getCardUniqueId(color, value);
+                    this.playerHand.addItemType(card_type_id, card_type_id, g_gamethemeurl + 'img/cards.png', card_type_id);
+                }
+            }
+
+            this.playerHand.addToStockWithId(this.getCardUniqueId(2, 3), 10)
+            this.playerHand.addToStockWithId(this.getCardUniqueId(3, 1), 1)
+
+            dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
  
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -157,6 +175,10 @@ function (dojo, declare) {
             script.
         
         */
+       // Get card unique identifier based on its color and value
+        getCardUniqueId : function(color, value) {
+            return (color - 1) * 6 + (value - 1);
+        },
 
 
         ///////////////////////////////////////////////////
@@ -172,6 +194,20 @@ function (dojo, declare) {
             _ make a call to the game server
         
         */
+
+        onPlayerHandSelectionChanged: function() {
+            let items = this.playerHand.getSelectedItems();
+
+            if (items.length > 0) {
+                if (this.checkAction('playCard', true)) {
+                    // can play a card
+                    let card_id = items[0].id;
+                    console.log(("on playCard " + card_id));
+
+                }
+                this.playerHand.unselectAll();
+            }
+        },
         
         /* Example:
         

@@ -23,9 +23,9 @@
  * Note: if the HTML of your game interface is always the same, you don't have to place anything here.
  *
  */
-  
-require_once( APP_BASE_PATH."view/common/game.view.php" );
-  
+
+require_once(APP_BASE_PATH . "view/common/game.view.php");
+
 class view_airlandseaelliotr_airlandseaelliotr extends game_view
 {
     protected function getGameName()
@@ -33,31 +33,59 @@ class view_airlandseaelliotr_airlandseaelliotr extends game_view
         // Used for translations and stuff. Please do not modify.
         return "airlandseaelliotr";
     }
-    
-  	function build_page( $viewArgs )
-  	{		
-  	    // Get players & players number
+
+    function build_page($viewArgs)
+    {
+        // $this->game->console_log($this->game->theatres);
+        // Get players & players number
         $players = $this->game->loadPlayersBasicInfos();
-        $players_nbr = count( $players );
+        $players_nbr = count($players);
 
         /*********** Place your code below:  ************/
 
+        $template = self::getGameName() . "_" . self::getGameName();
+
+        $theatre_types = $this->game->get_theatre_order();
+
+        // Figure out which user is looking at the website (want to display their cards on bottom)
+        global $g_user;
+        $current_player_id = $g_user->get_id();
+        foreach ($players as $player_id => $player) {
+            // Only ever 2 players so this function does work :)
+            if ($player_id != $current_player_id) {
+                $other_player = $player_id;
+            }
+        }
+        // if ($players[])
+
+        // this will inflate our player block with actual players data
+        $this->page->begin_block($template, "THEATRES");
+        foreach ($theatre_types as $type) {
+            $this->page->insert_block(
+                "THEATRES",
+                array(
+                    "THEATRE" => $type,
+                    "PLAYER_ID" => $current_player_id,
+                    "OTHER_PLAYER_ID" => $other_player,
+                )
+            );
+        }
+
+        // this will make our My Hand text translatable
+        $this->tpl['MY_HAND'] = self::_("My hand");
 
         /*
         
         // Examples: set the value of some element defined in your tpl file like this: {MY_VARIABLE_ELEMENT}
-
         // Display a specific number / string
         $this->tpl['MY_VARIABLE_ELEMENT'] = $number_to_display;
-
         // Display a string to be translated in all languages: 
         $this->tpl['MY_VARIABLE_ELEMENT'] = self::_("A string to be translated");
-
         // Display some HTML content of your own:
         $this->tpl['MY_VARIABLE_ELEMENT'] = self::raw( $some_html_code );
         
         */
-        
+
         /*
         
         // Example: display a specific HTML block for each player in this game.
@@ -66,15 +94,14 @@ class view_airlandseaelliotr_airlandseaelliotr extends game_view
         //          ... my HTML code ...
         //      <!-- END myblock --> 
         
-
         $this->page->begin_block( "airlandseaelliotr_airlandseaelliotr", "myblock" );
         foreach( $players as $player )
         {
-            $this->page->insert_block( "myblock", array( 
-                                                    "PLAYER_NAME" => $player['player_name'],
-                                                    "SOME_VARIABLE" => $some_value
-                                                    ...
-                                                     ) );
+        $this->page->insert_block( "myblock", array( 
+        "PLAYER_NAME" => $player['player_name'],
+        "SOME_VARIABLE" => $some_value
+        ...
+        ) );
         }
         
         */
@@ -82,5 +109,5 @@ class view_airlandseaelliotr_airlandseaelliotr extends game_view
 
 
         /*********** Do not change anything below this line  ************/
-  	}
+    }
 }

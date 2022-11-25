@@ -29,6 +29,26 @@
 This is your game interface. You can edit this HTML in your ".tpl" file.
 
 
+<div id="theatres">
+    <!-- BEGIN THEATRES -->
+    <div id="theatre_{THEATRE}" class="theatre">
+        <div id="theatre_cards_{THEATRE}_{OTHER_PLAYER_ID}" class="theatre_cards whiteblock"   ></div>
+        <div id="theatre_picture_{THEATRE}"                 class="theatre_picture"            ></div>
+        <div id="theatre_cards_{THEATRE}_{PLAYER_ID}"       class="theatre_cards whiteblock"   ></div>
+    </div>
+    <!-- END THEATRES -->
+</div>
+
+
+
+<div id="myhand_wrap" class="whiteblock">
+    <h3> My Hand </h3>
+    <div id="myhand">
+        <div class="playertablecard"></div>
+    </div>
+</div>
+
+
 <script type="text/javascript">
 
 // Javascript HTML templates

@@ -69,4 +69,55 @@
 
 
 
+.playertablecard {
+    display: inline-block;
+    position: relative;
+    margin-top: 5px;
+    width: 72px;
+    height: 96px;
+    /* background-image: url('img/cards.png'); temp hack to see it */
+}
 
+
+#theatres {
+    /* height: 50%; */
+    /* width: 75%; */
+    height: 800px;
+    /* border: 1px solid black; */
+    display: flex;
+    gap: 10px;
+}
+
+.theatre {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#theatre_picture_Air {
+    background-position: 0px 0px;
+}
+#theatre_picture_Land {
+    background-position: -352px 0px;
+}
+#theatre_picture_Sea {
+    background-position: -704px 0px;
+}
+
+.theatre_picture {
+    /* border: 1px solid black; */
+    /* display: flex; */
+    /* flex: 1; */
+    width: 352px;
+    height: 192px;
+    background-image: url('img/theatres.png');
+    /* width: 100%; */
+}
+
+.theatre_cards {
+    /* border: 1px solid red; */
+    flex: 1;
+    width: 50%;
+}
