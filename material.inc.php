@@ -19,9 +19,29 @@
  *
  */
 
-$theatres = array('Air', 'Land', 'Sea');
-shuffle($theatres);
-$this->theatres = $theatres;
+$this->theatres = array(
+    1 => array(
+        'name' => clienttranslate('Air'),
+        'nametr' => self::_('Air')
+    ),
+    2 => array(
+        'name' => clienttranslate('Land'),
+        'nametr' => self::_('Land')
+    ),
+    3 => array(
+        'name' => clienttranslate('Sea'),
+        'nametr' => self::_('Sea')
+    ),
+);
+
+$this->values_label = array(
+    1 => '1',
+    2 => '2',
+    3 => '3',
+    4 => '4',
+    5 => '5',
+    6 => '6',
+);
 
 /*
 Example:

@@ -44,6 +44,9 @@ class airlandseaelliotr extends Table
 
             )
         );
+
+        $this->cards = self::getNew("module.common.deck");
+        $this->cards->init("card");
     }
 
     protected function getGameName()
@@ -81,9 +84,6 @@ class airlandseaelliotr extends Table
         self::reloadPlayersBasicInfos();
 
 
-        // $theatres = array('Air', 'Land', 'Sea');
-        // shuffle($theatres);
-        // self::setGameStateInitalValue('theatres', $theatres);
         $sql = "INSERT INTO `theatres` (`theatre`, `order`) VALUES ";
         $values = array();
         $theatres = array('Air', 'Land', 'Sea');
@@ -93,15 +93,32 @@ class airlandseaelliotr extends Table
 
         foreach ($theatres as $theatre) {
             $order = array_pop($orders);
-            // $values[] = "('"
-            // $values[] = "(" . $theatre . ", " . $order . ")";
             $values[] = "('" . $theatre . "', '" . $order . "')";
         }
 
         $sql .= implode($values, ',');
-        // $sql .= ";";
         self::DbQuery($sql);
 
+
+        // Create cards
+        $cards = array();
+        // $theatres = array('Air', 'Land', 'Sea');
+        $theatres = array('0', '1', '2');
+        foreach ($theatres as $theatre) {
+            for ($value = 1; $value <= 6; $value++) {
+                $cards[] = array('type' => $theatre, 'type_arg' => $value, 'nbr' => 1);
+            }
+        }
+
+        $this->cards->createCards($cards, 'deck');
+
+        // Shuffle deck
+        $this->cards->shuffle('deck');
+        // Deal 13 cards to each players
+        $players = self::loadPlayersBasicInfos();
+        foreach ($players as $player_id => $player) {
+            $cards = $this->cards->pickCards(6, 'deck', $player_id);
+        }
 
 
 
@@ -149,15 +166,28 @@ class airlandseaelliotr extends Table
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
 
-        $result['test'] = "This is a test";
-        // self::console_log("game all datas");
-        // self::console_log($this->theatres);
-        // self::debug("This is a test");
-        // $result['player_ids'] = array();
-        // foreach ($result['player_ids'] as $player_id => $player) {
-        //     $result['player_ids'][] = $player_id;
-        // }
-        // $result
+        $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
+
+        $player_ids = self::get_player_ids();
+        $result['player_ids'] = $player_ids;
+        // $players = self::get_player_ids();
+        $result['table'] = array(
+            'Air' => array(
+                $player_ids[0] => array(),
+                $player_ids[1] => array(),
+            ),
+            'Land' => array(
+                $player_ids[0] => array(),
+                $player_ids[1] => array(),
+            ),
+            'Sea' => array(
+                $player_ids[0] => array(),
+                $player_ids[1] => array(),
+            ),
+        );
+
+
+        // $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
@@ -207,6 +237,25 @@ class airlandseaelliotr extends Table
             $theatres[] = $values['theatre'];
         }
         return $theatres;
+    }
+
+    public function get_player_ids()
+    {
+        $players = self::getNextPlayerTable();
+        $current_player_id = self::getCurrentPlayerId();
+
+        // 2 player game always
+        // $player_ids[0] is current player
+        // $player_ids[1] is other player
+        $player_ids = array($current_player_id);
+
+        foreach ($players as $player_id => $player) {
+            if ($player_id != $current_player_id) {
+                $player_ids[] = $player_id;
+            }
+        }
+
+        return $player_ids;
     }
 
 

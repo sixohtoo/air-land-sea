@@ -27,6 +27,18 @@ function (dojo, declare) {
             console.log('airlandseaelliotr constructor');
             this.cardwidth = 72;
             this.cardheight = 96;
+            this.cardsInRow = 6;
+
+            this.colorToRow = {
+                'Air': 0,
+                'Land': 1,
+                'Sea': 2,
+            }
+            this.rowToColor = {
+                '0': 'Air',
+                '1': 'Land',
+                '2': 'Sea',
+            }
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
@@ -58,6 +70,7 @@ function (dojo, declare) {
                 // TODO: Setting up players boards if needed
             }
             
+            this.player_id = gamedatas.player_ids[0];
             // TODO: Set up your game interface here, according to "gamedatas"
  
             this.playerHand = new ebg.stock();
@@ -65,15 +78,47 @@ function (dojo, declare) {
             this.playerHand.image_items_per_row = 6;
 
             // create cards types
-            for (let color = 1; color <= 3; color++) {
+            for (let color = 0; color <= 2; color++) {
                 for (let value = 1; value <= 6; value++) {
-                    let card_type_id = this.getCardUniqueId(color, value);
+                    let card_type_id = this.getCardId(color, value)
                     this.playerHand.addItemType(card_type_id, card_type_id, g_gamethemeurl + 'img/cards.png', card_type_id);
                 }
             }
 
-            this.playerHand.addToStockWithId(this.getCardUniqueId(2, 3), 10)
-            this.playerHand.addToStockWithId(this.getCardUniqueId(3, 1), 1)
+            for (let i in gamedatas.hand) {
+                let card = gamedatas.hand[i];
+                // let color = card.type;
+                let color = this.rowToColor[card.type];
+                let value = card.type_arg;
+                this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
+            }
+
+            this.table = {}
+            for (let theatre in gamedatas.table) {
+                this.table[theatre] = {}
+                let players = gamedatas.table[theatre];
+                for (let player in players) {
+                    this.table[theatre][player] = {}
+                    let cards = players[player];
+                    for (let i in cards) {
+                        let card = cards[i];
+                        this.playCardOnTable(theatre, card.type, card.type_arg, player)
+                        // add_card()
+                    }
+                }
+            }
+
+            // let table = gamedatas.table;
+            // for (let theatre in table) {
+            //     for (let card in theatre) {
+            //         let color = card.type;
+            //         let value = card.type_arg;
+            //         let player_id = card.location_arg;
+            //         this.playCardOnTable(player_id, color, value, theatre, card.id)
+            //     }
+            // }
+            // this.playerHand.addToStockWithId(this.getCardUniqueId(2, 3), 10)
+            // this.playerHand.addToStockWithId(this.getCardUniqueId(3, 1), 1)
 
             dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
  
@@ -176,8 +221,71 @@ function (dojo, declare) {
         
         */
        // Get card unique identifier based on its color and value
+
+        // color is an int this time
+        getCardId: function(color, value) {
+            return color * 6 + (value - 1);
+        },
+
         getCardUniqueId : function(color, value) {
-            return (color - 1) * 6 + (value - 1);
+            return this.getRowFromColor(color) * 6 + (value - 1);
+        },
+
+        getCardFromUniqueId : function(id) {
+            // note if id is 0, things go bad. pls dont do.
+            let color = this.rowToColor(Math.floor(id / this.cardsInRow))
+            let number = id % this.cardsInRow
+            return {color, number}
+        },
+
+        getRowFromColor : function(color) {
+            return this.colorToRow[color]
+        },
+
+        addCardToPlayer: function (theatre, color, number, playerId) {
+            
+            // let mode = 'only';
+            const cards = this.playerCards[theatre][playerId];
+
+            // make every card already placed in target theatre stacked
+            for (let i in cards) {
+                let target = cards[i];
+                let cardDiv = $('theatre_cards_' + target.id);
+                if (!cardDiv.classList.contains('stacked')) {
+                    cardDiv.classList.add('stacked')
+                }
+            }
+
+            const card = {
+                color,
+                number,
+                id: this.getCardUniqueId(color, number),
+                isFlipped: false
+            }
+            // card = parseInt(card);
+            cards.push(card);
+
+            let to = 'theatre_cards_' + theatre + '_' + playerId;
+            dojo.place(this.format_block('jstpl_placed_card', {
+                x: (card.number - 1) * this.cardwidth,
+                y: this.getRowFromTheatre(color) * this.cardheight,
+                z: card.number,
+                CARD_ID: card.id
+            }), to, 'last');
+
+
+            // Opponent placed card
+            if (playerId != this.player_id) {
+                this.placeOnObject('theatre_cards_' + card.id, 'overall_player_board_' + playerId);
+            }
+            else {
+                // TODO may need ot check if card came from hand for Land1s
+                this.placeOnObject('theatre_cards_' + card.id, 'myhand_item_' + card.id)
+                this.playerHand.removeFromStockById(card.id)
+            }
+
+            this.slideToObject('theatre_cards' + card.id, to).play()
+
         },
 
 
@@ -196,6 +304,7 @@ function (dojo, declare) {
         */
 
         onPlayerHandSelectionChanged: function() {
+            console.log('in hanging hands funciton');
             let items = this.playerHand.getSelectedItems();
 
             if (items.length > 0) {
@@ -203,6 +312,10 @@ function (dojo, declare) {
                     // can play a card
                     let card_id = items[0].id;
                     console.log(("on playCard " + card_id));
+                    var id = items[0].type;
+                    let {color, number} = this.getCardFromUniqueId(id)
+                    
+                    this.playCardOnTable(color, color, number, player)
 
                 }
                 this.playerHand.unselectAll();

@@ -53,11 +53,7 @@ This is your game interface. You can edit this HTML in your ".tpl" file.
 
 // Javascript HTML templates
 
-/*
-// Example:
-var jstpl_some_game_item='<div class="my_game_item" id="my_game_item_${MY_ITEM_ID}"></div>';
-
-*/
+var jstpl_placed_card = '<div class="theatre_cards" id="theatre_cards_{CARD_ID}" style="background-position:-${x}% -${y}%;z-index:${z}"></div>';
 
 </script>  
 
