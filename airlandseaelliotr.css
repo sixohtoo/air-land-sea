@@ -100,10 +100,10 @@
     background-position: 0px 0px;
 }
 #theatre_picture_Land {
-    background-position: -352px 0px;
+    background-position: 50% 0px;
 }
 #theatre_picture_Sea {
-    background-position: -704px 0px;
+    background-position: 100% 0px;
 }
 
 .theatre_picture {
@@ -119,9 +119,28 @@
 .theatre_cards {
     /* border: 1px solid red; */
     flex: 1;
-    width: 50%;
+    width: 72px;
+    /* align-items: center; */
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.theatre_cards_card {
+    /* background-color: red; */
+    /* height: 100%;
+    width: 100%; */
+    position: initial !important;
+    background-image: url('img/cards.png');
+    border: 1px solid black;
+    /* position: relative; */
+    width: 72px;
+    height: 96px;
+    
+    /* display: flex; */
+
 }
 
 .stacked {
-    margin-bottom: -60px;
+    margin-bottom: -75%;
 }

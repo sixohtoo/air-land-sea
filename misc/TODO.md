@@ -4,6 +4,7 @@ ____
 
 # Important
 * Better placed_card ids so can't figure out what flipped card is from id
+* Fix z-index for removing/moving cards from theatre
 ____
 
 # Unimportant

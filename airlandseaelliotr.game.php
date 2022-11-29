@@ -103,7 +103,7 @@ class airlandseaelliotr extends Table
         // Create cards
         $cards = array();
         // $theatres = array('Air', 'Land', 'Sea');
-        $theatres = array('0', '1', '2');
+        $theatres = array(1, 2, 3);
         foreach ($theatres as $theatre) {
             for ($value = 1; $value <= 6; $value++) {
                 $cards[] = array('type' => $theatre, 'type_arg' => $value, 'nbr' => 1);
@@ -185,6 +185,8 @@ class airlandseaelliotr extends Table
                 $player_ids[1] => array(),
             ),
         );
+
+        $result['order'] = self::get_theatre_order();
 
 
         // $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
