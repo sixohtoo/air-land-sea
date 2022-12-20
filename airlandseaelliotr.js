@@ -108,7 +108,7 @@ function (dojo, declare) {
                     let cards = players[player];
                     for (let i in cards) {
                         let card = cards[i];
-                        this.playCardOnTable(theatre, card.type, card.type_arg, player)
+                        this.addCardToTheatre(theatre, card.type, card.type_arg, player, card.id, false)
                         // add_card()
                     }
                 }
@@ -248,10 +248,10 @@ function (dojo, declare) {
             return this.colorToRow[color]
         },
 
-        addCardToPlayer: function (theatre, color, number, playerId, divid) {
+        addCardToTheatre: function (theatre, color, number, playerId, divid, fromHand) {
             
             // let mode = 'only';
-            // debugger;
+            debugger;
             const cards = this.table[theatre][playerId];
             // debugger;
             // make every card already placed in target theatre stacked
@@ -279,23 +279,23 @@ function (dojo, declare) {
             // 3 -> 40
             // 4 -> 60
             let to = 'theatre_cards_' + theatre + '_' + playerId;
+            debugger;
             dojo.place(this.format_block('jstpl_placed_card', {
-                y: this.colorToRow[card.color] * 33.33,
+                y: parseInt(card.color) * 33.33,
                 x: (card.number - 1) * 20,
                 z: cards.length, // TODO: Change when can remove cards
                 CARD_ID: divid
                 // CARD_ID: card.id
             }), to, 'last');
 
-
+            console.log("div id is", divid)
             // Opponent placed card
-            if (playerId != this.player_id) {
-                this.placeOnObject('theatre_cards_' + card.id, 'overall_player_board_' + playerId);
+            if (playerId != this.player_id && fromHand) {
+                this.placeOnObject('theatre_cards_' + divid, 'overall_player_board_' + playerId);
             }
-            else {
+            else if (fromHand) {
                 // TODO may need ot check if card came from hand for Land1s
                 // this.placeOnObject('theatre_cards_' + card.id, 'myhand_item_' + divid)
-                // debugger;
                 this.placeOnObject('theatre_cards_' + divid, 'myhand_item_' + divid)
                 this.playerHand.removeFromStockById(divid)
             }
@@ -319,32 +319,52 @@ function (dojo, declare) {
             _ make a call to the game server
         
         */
-
-        onPlayerHandSelectionChanged: function() {
-            // console.log('in hanging hands funciton');
-            let items = this.playerHand.getSelectedItems();
+        onPlayerHandSelectionChanged : function() {
+            var items = this.playerHand.getSelectedItems();
 
             if (items.length > 0) {
-                if (this.checkAction('playCard', true)) {
-                    // can play a card
-                    let card_id = items[0].id;
-                    console.log(("on playCard " + card_id));
-                    var id = items[0].type;
-                    let {color, number} = this.getCardFromUniqueId(id)
+                var action = 'playCard';
+                if (this.checkAction(action, true)) {
+                    // Can play a card
+                    var card_id = items[0].id;                    
+                    this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                        id : card_id,
+                        lock : true
+                    }, this, function(result) {
+                    }, function(is_error) {
+                    });
 
-                    debugger;
-                    this.addCardToPlayer(color, color, number, this.player_id, card_id)
-                    // addCardToPlayer: function (theatre, color, number, playerId) {
-                    
-                    // this.playCardOnTable(color, color, number, player)
-
+                    this.playerHand.unselectAll();
+                } else {
+                    this.playerHand.unselectAll();
                 }
-                else {
-                    console.log('wot')
-                }
-                this.playerHand.unselectAll();
             }
         },
+        // onPlayerHandSelectionChanged: function() {
+        //     // console.log('in hanging hands funciton');
+        //     let items = this.playerHand.getSelectedItems();
+
+        //     if (items.length > 0) {
+        //         if (this.checkAction('playCard', true)) {
+        //             // can play a card
+        //             let card_id = items[0].id;
+        //             console.log(("on playCard " + card_id));
+        //             var id = items[0].type;
+        //             let {color, number} = this.getCardFromUniqueId(id)
+
+        //             debugger;
+        //             this.addCardToTheatre(color, color, number, this.player_id, card_id)
+        //             // addCardToTheatre: function (theatre, color, number, playerId) {
+                    
+        //             // this.playCardOnTable(color, color, number, player)
+
+        //         }
+        //         else {
+        //             console.log('wot')
+        //         }
+        //         this.playerHand.unselectAll();
+        //     }
+        // },
         
         /* Example:
         
@@ -393,22 +413,37 @@ function (dojo, declare) {
                   your airlandseaelliotr.game.php file.
         
         */
-        setupNotifications: function()
-        {
-            console.log( 'notifications subscriptions setup' );
-            
-            // TODO: here, associate your game notifications with local methods
-            
-            // Example 1: standard notification handling
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            
-            // Example 2: standard notification handling + tell the user interface to wait
-            //            during 3 seconds after calling the method in order to let the players
-            //            see what is happening in the game.
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
-            // 
-        },  
+        setupNotifications : function() {
+            console.log('notifications subscriptions setup');
+
+            dojo.subscribe('newHand', this, "notif_newHand");
+            dojo.subscribe('playCard', this, "notif_playCard");
+
+        },
+
+        notif_newHand : function(notif) {
+            // We received a new full hand of 13 cards.
+            this.playerHand.removeAll();
+
+            for ( let i in notif.args.cards ) {
+                var card = notif.args.cards[i];
+                var color = card.type;
+                var value = card.type_arg;
+                this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
+            }
+        },
+
+        notif_playCard : function(notif) {
+            // Play a card on the table
+            // this.playCardOnTable(notif.args.player_id, notif.args.color, notif.args.value, notif.args.card_id);
+            theatre = this.rowToColor[notif.args.theatre]
+            color = notif.args.color
+            number = notif.args.value
+            player_id = notif.args.player_id
+            card_id = notif.args.card_id
+            this.addCardToTheatre(theatre, color, number, player_id, card_id, true)
+        },
+        
         
         // TODO: from this point and below, you can write your game notifications handling methods
         

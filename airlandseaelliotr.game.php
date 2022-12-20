@@ -173,16 +173,16 @@ class airlandseaelliotr extends Table
         // $players = self::get_player_ids();
         $result['table'] = array(
             'Air' => array(
-                $player_ids[0] => array(),
-                $player_ids[1] => array(),
+                $player_ids[0] => $this->cards->getCardsInLocation('Air', $player_ids[0]),
+                $player_ids[1] => $this->cards->getCardsInLocation('Air', $player_ids[1]),
             ),
             'Land' => array(
-                $player_ids[0] => array(),
-                $player_ids[1] => array(),
+                $player_ids[0] => $this->cards->getCardsInLocation('Land', $player_ids[0]),
+                $player_ids[1] => $this->cards->getCardsInLocation('Land', $player_ids[1]),
             ),
             'Sea' => array(
-                $player_ids[0] => array(),
-                $player_ids[1] => array(),
+                $player_ids[0] => $this->cards->getCardsInLocation('Sea', $player_ids[0]),
+                $player_ids[1] => $this->cards->getCardsInLocation('Sea', $player_ids[1]),
             ),
         );
 
@@ -271,6 +271,42 @@ class airlandseaelliotr extends Table
     (note: each method below must match an input method in airlandseaelliotr.action.php)
     */
 
+    function playCard($card_id)
+    {
+        self::checkAction("playCard");
+        $player_id = self::getActivePlayerId();
+        // XXX check rules here
+        $currentCard = $this->cards->getCard($card_id);
+        // self::error("beans!");
+        // self::error("appear?");
+        // self::error(print_r($currentCard, true));
+        // foreach ($currentCard as $a => $b) {
+        //     self::error($a, $b);
+        // }
+        // self::error("Card type is");
+        // self::error($theatre);
+        $theatre = $currentCard['type']; // TODO: Gottsta change this later when playing cards on wrong theatre
+        $this->cards->moveCard($card_id, $this->theatre_name[$theatre], $player_id);
+        // And notify
+        self::notifyAllPlayers(
+            'playCard',
+            clienttranslate('${player_name} plays ${value_displayed} ${color_displayed}'),
+            array(
+                'i18n' => array('color_displayed', 'value_displayed'),
+                'card_id' => $card_id,
+                'player_id' => $player_id,
+                'player_name' => self::getActivePlayerName(),
+                'value' => $currentCard['type_arg'],
+                'value_displayed' => $this->values_label[$currentCard['type_arg']],
+                'color' => $currentCard['type'],
+                'color_displayed' => $this->theatres[$currentCard['type']]['name'],
+                'theatre' => $theatre
+            )
+        );
+        // Next player
+        $this->gamestate->nextState('playCard');
+    }
+
     /*
     
     Example:
@@ -307,22 +343,62 @@ class airlandseaelliotr extends Table
     game state.
     */
 
-    /*
-    
-    Example for game state "MyGameState":
-    
-    function argMyGameState()
+
+    # called when dealing cards ot each player
+    function stNewHand()
     {
-    // Get some values from the current game situation in database...
-    
-    // return values:
-    return array(
-    'variable1' => $value1,
-    'variable2' => $value2,
-    ...
-    );
-    }    
-    */
+        // take back all cards (from any location -> null) to deck
+        $this->cards->moveAllCardsInLocation(null, "deck");
+        $this->cards->shuffle('deck');
+        // deal 6 cards to each player
+        // create deck, shuffle it and give 6 initial cards
+
+        $players = self::loadPlayersBasicInfos();
+        foreach ($players as $player_id => $player) {
+            $cards = $this->cards->pickCards(6, 'deck', $player_id);
+            // notify player about his cards
+            self::notifyPlayer($player_id, 'newHand', '', array('cards' => $cards));
+        }
+
+        // need to swap players here. will worry about later
+        $this->gamestate->nextState("");
+    }
+
+
+    function stNextPlayer()
+    {
+        // make next player active OR end round
+        $players_ids = self::get_player_ids();
+        // $cards_played = count($this->cards->getCardsInLocation('hand', $players_ids[0]))
+        $cards_remaining = $this->cards->countcardsInLocation('hand');
+
+        // All dealt cards have been played -> end round
+        if ($cards_remaining == 0) {
+            // deal with player scores and check if player reached 12 points
+            $this->gamestate->nextState("endRound");
+        } else {
+            // else next player's turn to place a card.
+            $player_id = self::activeNextPlayer();
+            self::giveExtraTime($player_id);
+            $this->gamestate->nextState("nextTurn");
+        }
+
+        // notify
+        // $players = self::loadPlayersBasicInfos();
+        // self::notifyAllPlayers('')
+    }
+
+    function stRoundEnd()
+    {
+        // figure out if someone has hit 12 points
+        //  -> then end game
+        // otherwise start next round
+    }
+
+    function argGiveCards()
+    {
+        return array();
+    }
 
     //////////////////////////////////////////////////////////////////////////////
 //////////// Game state actions

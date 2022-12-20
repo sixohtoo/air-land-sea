@@ -34,6 +34,12 @@ $this->theatres = array(
     ),
 );
 
+$this->theatre_name = array(
+    1 => "Air",
+    2 => "Land",
+    3 => "Sea"
+);
+
 $this->values_label = array(
     1 => '1',
     2 => '2',
@@ -42,6 +48,8 @@ $this->values_label = array(
     5 => '5',
     6 => '6',
 );
+
+$this->max_points = 12;
 
 /*
 Example:
