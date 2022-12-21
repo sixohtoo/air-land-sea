@@ -79,6 +79,7 @@ function (dojo, declare) {
             this.playerHand = new ebg.stock();
             this.playerHand.create(this, $('myhand'), this.cardwidth, this.cardheight);
             this.playerHand.image_items_per_row = 6;
+            this.playerHand.setSelectionMode(1) // only 1 card can be selected at a time
 
             // create cards types
             // Air, Land, Sea
@@ -113,6 +114,27 @@ function (dojo, declare) {
                     }
                 }
             }
+
+            console.log(gamedatas.players)
+            // console.log('here')
+            // console.log($('.elliot'))
+            let theatres = ['Air', 'Land', 'Sea']
+            theatres.forEach(theatre => {
+                // console.log($(`theatre_picture_${theatre}`))
+                // $(`theatre_picture_${theatre}`).onclick = this.onClickTheatre
+                $(`theatre_picture_${theatre}`).onclick = (e) => this.onClickTheatre(e)
+                // console.log($(`theatre_cards_${theatre}_${this.player_id}`))
+                $(`theatre_cards_${theatre}_${this.player_id}`).onclick = (e) => this.onClickTheatre(e)
+                // $(`theatre_picture_${theatre}`).onclick = onClickTheatre
+
+            })
+            // debugger;
+            // $('myhand').each(function() {
+            //     console.log('jo')
+            // })
+            // $('div').each(function() {
+            //     console.log('hello')
+            // })
 
             // let table = gamedatas.table;
             // for (let theatre in table) {
@@ -157,8 +179,7 @@ function (dojo, declare) {
                 
                 break;
            */
-           
-           
+            
             case 'dummmy':
                 break;
             }
@@ -199,8 +220,15 @@ function (dojo, declare) {
                       
             if( this.isCurrentPlayerActive() )
             {            
+                console.log('in thingo state is', stateName)
                 switch( stateName )
                 {
+                    case 'playerTurn':
+                        this.addActionButton('playCardUp_button', _('Play face up'), 'playCardFaceUp');
+                        this.addActionButton('playCardDown_button', _('Play face down'), 'playCardFaceDown');
+                        this.addActionButton('cancel_button', _('Cancel'), 'cancelAction');
+                        this.addActionButton('forfeit_button', _('Forfeit'), 'forfeitRound', null, false, 'red');
+                        break;
 /*               
                  Example:
  
@@ -319,26 +347,67 @@ function (dojo, declare) {
             _ make a call to the game server
         
         */
+       /**
+        * plan
+        * * when clicking card
+        *       * if 0 cards selected, select card
+        *       * if 1 card selected, select new card, unselect old card
+        * 
+        */
+        playCardFaceUp : function() {
+            console.log("playing face up");
+        },
+
+        playCardFaceDown : function() {
+            console.log("playing face down");
+        },
+
+        cancelAction : function() {
+            console.log("cancelling action");
+        },
+
+        forfeitRound : function() {
+            console.log('forfeitting');
+        },
+
+        onClickTheatre : function(event) {
+            debugger;
+            let theatre = event.target.id.split('_')[2]
+            console.log(theatre)
+            let items = this.playerHand.getSelectedItems()
+            let action = 'playCard'
+            if (this.checkAction(action, true) && items.length) {
+                let card_id = items[0].id;                    
+                this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                    id : card_id,
+                    theatre: this.colorToRow[theatre],
+                    lock : true
+                }, this, function(result) {
+                }, function(is_error) {
+                });
+            }
+        },
+
         onPlayerHandSelectionChanged : function() {
             var items = this.playerHand.getSelectedItems();
 
-            if (items.length > 0) {
-                var action = 'playCard';
-                if (this.checkAction(action, true)) {
-                    // Can play a card
-                    var card_id = items[0].id;                    
-                    this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
-                        id : card_id,
-                        lock : true
-                    }, this, function(result) {
-                    }, function(is_error) {
-                    });
+            // if (items.length == 1) {
+            //     var action = 'playCard';
+            //     if (this.checkAction(action, true)) {
+            //         // Can play a card
+            //         var card_id = items[0].id;                    
+            //         this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+            //             id : card_id,
+            //             lock : true
+            //         }, this, function(result) {
+            //         }, function(is_error) {
+            //         });
 
-                    this.playerHand.unselectAll();
-                } else {
-                    this.playerHand.unselectAll();
-                }
-            }
+            //         this.playerHand.unselectAll();
+            //     } else {
+            //         this.playerHand.unselectAll();
+            //     }
+            // }
         },
         // onPlayerHandSelectionChanged: function() {
         //     // console.log('in hanging hands funciton');

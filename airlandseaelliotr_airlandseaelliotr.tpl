@@ -29,12 +29,12 @@
 This is your game interface. You can edit this HTML in your ".tpl" file.
 
 
-<div id="theatres">
+<div id="theatres" class="elliot">
     <!-- BEGIN THEATRES -->
     <div id="theatre_{THEATRE}" class="theatre">
-        <div id="theatre_cards_{THEATRE}_{OTHER_PLAYER_ID}" class="theatre_cards whiteblock"   ></div>
-        <div id="theatre_picture_{THEATRE}"                 class="theatre_picture"            ></div>
-        <div id="theatre_cards_{THEATRE}_{PLAYER_ID}"       class="theatre_cards whiteblock"   ></div>
+        <div id="theatre_cards_{THEATRE}_{OTHER_PLAYER_ID}" class="theatre_cards whiteblock"          ></div>
+        <div id="theatre_picture_{THEATRE}"                 class="theatre_picture target"            ></div>
+        <div id="theatre_cards_{THEATRE}_{PLAYER_ID}"       class="theatre_cards whiteblock target"   ></div>
     </div>
     <!-- END THEATRES -->
 </div>

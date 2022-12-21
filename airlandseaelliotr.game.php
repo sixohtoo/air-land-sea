@@ -271,21 +271,23 @@ class airlandseaelliotr extends Table
     (note: each method below must match an input method in airlandseaelliotr.action.php)
     */
 
-    function playCard($card_id)
+    function playCard($card_id, $target_theatre)
     {
         self::checkAction("playCard");
         $player_id = self::getActivePlayerId();
         // XXX check rules here
         $currentCard = $this->cards->getCard($card_id);
-        // self::error("beans!");
-        // self::error("appear?");
-        // self::error(print_r($currentCard, true));
-        // foreach ($currentCard as $a => $b) {
-        //     self::error($a, $b);
-        // }
-        // self::error("Card type is");
-        // self::error($theatre);
         $theatre = $currentCard['type']; // TODO: Gottsta change this later when playing cards on wrong theatre
+
+        // TODO: Rules checking wop wop
+        self::warn(sprintf("target is %d whereas theatre is %d", $target_theatre, $theatre));
+        if ($target_theatre !== $theatre) {
+            throw new BgaUserException("That card can't go there!");
+        }
+        // self::error()
+        // self::error("target theatre: ", $target_theatre, "\ntheatre: ", $theatre);
+        // if ($theatre !== $target_theatre)
+
         $this->cards->moveCard($card_id, $this->theatre_name[$theatre], $player_id);
         // And notify
         self::notifyAllPlayers(

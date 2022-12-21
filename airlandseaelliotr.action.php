@@ -42,7 +42,8 @@ class action_airlandseaelliotr extends APP_GameAction
   {
     self::setAjaxMode();
     $card_id = self::getArg("id", AT_posint, true);
-    $this->game->playCard($card_id);
+    $theatre = self::getArg("theatre", AT_posint, true);
+    $this->game->playCard($card_id, $theatre);
     self::ajaxResponse();
   }
 
