@@ -224,10 +224,11 @@ function (dojo, declare) {
                 switch( stateName )
                 {
                     case 'playerTurn':
-                        this.addActionButton('playCardUp_button', _('Play face up'), 'playCardFaceUp');
-                        this.addActionButton('playCardDown_button', _('Play face down'), 'playCardFaceDown');
-                        this.addActionButton('cancel_button', _('Cancel'), 'cancelAction');
-                        this.addActionButton('forfeit_button', _('Forfeit'), 'forfeitRound', null, false, 'red');
+                        // this.addActionButton('playCardUp_button', _('Play face up'), 'playCardFaceUp');
+                        // this.addActionButton('playCardDown_button', _('Play face down'), 'playCardFaceDown');
+                        // this.addActionButton('cancel_button', _('Cancel'), 'cancelAction');
+                        // this.addActionButton('forfeit_button', _('Forfeit'), 'forfeitRound', null, false, 'red');
+                        // this.addActionButton('elliot_button', _('Click me'), () => this.testButton('hello'), null, false, 'red');
                         break;
 /*               
                  Example:
@@ -276,7 +277,7 @@ function (dojo, declare) {
             return this.colorToRow[color]
         },
 
-        addCardToTheatre: function (theatre, color, number, playerId, divid, fromHand) {
+        addCardToTheatre: function (theatre, color, number, playerId, divid, faceUp, fromHand) {
             
             // let mode = 'only';
             debugger;
@@ -308,8 +309,9 @@ function (dojo, declare) {
             // 4 -> 60
             let to = 'theatre_cards_' + theatre + '_' + playerId;
             debugger;
+            let y = faceUp ? parseInt(card.color) * 33.33 : 0;
             dojo.place(this.format_block('jstpl_placed_card', {
-                y: parseInt(card.color) * 33.33,
+                y,
                 x: (card.number - 1) * 20,
                 z: cards.length, // TODO: Change when can remove cards
                 CARD_ID: divid
@@ -333,6 +335,10 @@ function (dojo, declare) {
 
         },
 
+        // playCard : function() {
+        //     let {}
+        // },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -354,38 +360,69 @@ function (dojo, declare) {
         *       * if 1 card selected, select new card, unselect old card
         * 
         */
-        playCardFaceUp : function() {
-            console.log("playing face up");
+        // playCardFaceUp : function() {
+        //     console.log("playing face up");
+        // },
+
+
+        // playCardFaceDown : function() {
+        //     console.log("playing face down");
+        // },
+
+        // cancelAction : function() {
+        //     console.log("cancelling action");
+        // },
+
+        // forfeitRound : function() {
+        //     console.log('forfeitting');
+        // },
+
+        playCard : function(faceUp, theatre, card_id) {
+            console.log(faceUp, theatre, card_id)
+            let action = 'playCard'
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                id : card_id,
+                theatre: this.colorToRow[theatre],
+                faceUp: faceUp,
+                lock : true
+            }, this, this.playCardAjaxSuccessful, this.playCardAjaxFail);
+
         },
 
-        playCardFaceDown : function() {
-            console.log("playing face down");
-        },
-
-        cancelAction : function() {
-            console.log("cancelling action");
-        },
-
-        forfeitRound : function() {
-            console.log('forfeitting');
-        },
-
+        // TODO: bug! have to already have selected a card. will fix later
         onClickTheatre : function(event) {
             debugger;
             let theatre = event.target.id.split('_')[2]
             console.log(theatre)
             let items = this.playerHand.getSelectedItems()
             let action = 'playCard'
+            // this.addActionButton()
             if (this.checkAction(action, true) && items.length) {
-                let card_id = items[0].id;                    
-                this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
-                    id : card_id,
-                    theatre: this.colorToRow[theatre],
-                    lock : true
-                }, this, function(result) {
-                }, function(is_error) {
-                });
+                let card_id = items[0].id
+                this.removeActionButtons()
+                this.addActionButton('playCardUp_button', _('Play face up'), () => this.playCard(true, theatre, card_id));
+                this.addActionButton('playCardDown_button', _('Play face down'), () => this.playCard(false, theatre, card_id));
             }
+
+            // if (this.checkAction(action, true) && items.length) {
+            //     let card_id = items[0].id;                    
+            //     this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+            //         id : card_id,
+            //         theatre: this.colorToRow[theatre],
+            //         lock : true
+            //     }, this, this.playCardAjaxSuccessful, function(is_error) {
+            //     });
+            // }
+        },
+
+        playCardAjaxSuccessful : function(result) {
+            console.log('successful ajax wop wop')
+            console.log(result)
+        },
+
+        playCardAjaxFail : function(is_error) {
+            console.log('rip ajax jailed wop wop')
+            console.log(is_error)
         },
 
         onPlayerHandSelectionChanged : function() {
@@ -510,7 +547,8 @@ function (dojo, declare) {
             number = notif.args.value
             player_id = notif.args.player_id
             card_id = notif.args.card_id
-            this.addCardToTheatre(theatre, color, number, player_id, card_id, true)
+            face_up = notif.args.faceUp
+            this.addCardToTheatre(theatre, color, number, player_id, card_id, face_up, true)
         },
         
         

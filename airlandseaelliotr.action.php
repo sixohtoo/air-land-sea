@@ -43,7 +43,10 @@ class action_airlandseaelliotr extends APP_GameAction
     self::setAjaxMode();
     $card_id = self::getArg("id", AT_posint, true);
     $theatre = self::getArg("theatre", AT_posint, true);
-    $this->game->playCard($card_id, $theatre);
+    $faceUp = self::getArg("faceUp", AT_bool, true);
+    self::error("LOOK OVER HERE");
+    self::error($faceUp);
+    $this->game->playCard($card_id, $theatre, $faceUp);
     self::ajaxResponse();
   }
 
