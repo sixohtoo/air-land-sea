@@ -36,6 +36,12 @@ ALTER TABLE `card` ADD `face_up` BOOLEAN DEFAULT TRUE;
 -- ALTER TABLE 'card' ADD 'face_up' BOOLEAN DEFAULT '0';
 
 
+ALTER TABLE `player` ADD `Air` int(3) DEFAULT '0';
+ALTER TABLE `player` ADD `Land` int(3) DEFAULT '0';
+ALTER TABLE `player` ADD `Sea` int(3) DEFAULT '0';
+
+
+
 CREATE TABLE IF NOT EXISTS `theatres` (
     `theatre` varchar(16) NOT NULL,
     `order` int(16) NOT NULL,

@@ -53,8 +53,10 @@ This is your game interface. You can edit this HTML in your ".tpl" file.
 
 // Javascript HTML templates
 
-var jstpl_placed_card = '<div class="theatre_cards_card" id="theatre_cards_${CARD_ID}" style="background-position:${x}% ${y}%;z-index:${z};elliot:602;"></div>';
+var jstpl_placed_card = '<div class="theatre_cards_card" id="theatre_cards_${CARD_ID}" style="background-position:${x}% ${y}%;z-index:${z};"></div>';
 
+var jstpl_player_board = '<div class="theatre_score" id="theatre_score_${theatre}_${player}"><span id="theatre_score_${theatre}_picture">${color}</span><span id="score_${theatre}_${player}"></span></div>';
+// var jstpl_player_board = '<div class="theatre_score" id="theatre_score_${theatre}_{player}">0</div>';
 </script>  
 
 {OVERALL_GAME_FOOTER}

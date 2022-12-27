@@ -166,31 +166,34 @@ class airlandseaelliotr extends Table
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
 
-        $result['hand'] = $this->cards->getCardsInLocation('hand', $current_player_id);
+        $result['hand'] = self::getCardsInLocation('hand', $current_player_id);
 
         $player_ids = self::get_player_ids();
         $result['player_ids'] = $player_ids;
         // $players = self::get_player_ids();
         $result['table'] = array(
             'Air' => array(
-                $player_ids[0] => $this->cards->getCardsInLocation('Air', $player_ids[0]),
-                $player_ids[1] => $this->cards->getCardsInLocation('Air', $player_ids[1]),
+                $player_ids[0] => self::getCardsInLocation('Air', $player_ids[0]),
+                $player_ids[1] => self::getCardsInLocation('Air', $player_ids[1]),
             ),
             'Land' => array(
-                $player_ids[0] => $this->cards->getCardsInLocation('Land', $player_ids[0]),
-                $player_ids[1] => $this->cards->getCardsInLocation('Land', $player_ids[1]),
+                $player_ids[0] => self::getCardsInLocation('Land', $player_ids[0]),
+                $player_ids[1] => self::getCardsInLocation('Land', $player_ids[1]),
             ),
             'Sea' => array(
-                $player_ids[0] => $this->cards->getCardsInLocation('Sea', $player_ids[0]),
-                $player_ids[1] => $this->cards->getCardsInLocation('Sea', $player_ids[1]),
+                $player_ids[0] => self::getCardsInLocation('Sea', $player_ids[0]),
+                $player_ids[1] => self::getCardsInLocation('Sea', $player_ids[1]),
             ),
         );
 
         $result['order'] = self::get_theatre_order();
 
+        $result['scores'] = self::calculateRoundScore();
 
 
-
+        // self::error("\n\n\n\n\n\n\n\n");
+        // self::error("newcards in locaiton");
+        // self::error(print_r(self::getCardsInLocation('hand', $player_ids[0]), true));
         // $result['cardsontable'] = $this->cards->getCardsInLocation('cardsontable');
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
@@ -246,6 +249,8 @@ class airlandseaelliotr extends Table
     public function get_player_ids()
     {
         $players = self::getNextPlayerTable();
+        array_pop($players);
+
         $current_player_id = self::getCurrentPlayerId();
 
         // 2 player game always
@@ -262,13 +267,54 @@ class airlandseaelliotr extends Table
         return $player_ids;
     }
 
-    public function getCardsInLocation()
+    // TODO: remove sqli issues
+    public function getCardsInLocation($location, $location_arg)
     {
-        $x = self::DbQuery("SELECT card_id, card_type, card_type_arg, card_location, card_location_arg, face_up from card");
-        self::Error(print_r($x, true));
+        $query = sprintf("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, face_up FROM card WHERE (card_location LIKE '%s') AND (card_location_arg = %d)", $location, $location_arg);
+        $x = self::getCollectionFromDB($query);
         return $x;
     }
 
+    public function flipCard($card_id, $state)
+    {
+        $query = sprintf("UPDATE card SET face_up = %d WHERE card_id = %d", $state, $card_id);
+        self::DbQuery($query);
+    }
+
+    public function calculateRoundScore()
+    {
+        $theatres = ['Air', 'Land', 'Sea'];
+        $player_ids = self::get_player_ids();
+        $scores = [
+            $player_ids[0] => [],
+            $player_ids[1] => [],
+        ];
+        foreach ($theatres as $theatre) {
+            foreach ($player_ids as $player_id) {
+                $scores[$player_id][$theatre] = 0;
+                $cards = self::getCardsInLocation($theatre, $player_id);
+
+                foreach ($cards as $card) {
+                    $points = $card['face_up'] ? $card['type_arg'] : 2;
+                    $scores[$player_id][$theatre] += $points;
+                }
+            }
+        }
+        return $scores;
+    }
+
+    public function updateRoundscore($scores)
+    {
+        foreach ($scores as $player_id => $theatres) {
+            $query = "UPDATE player SET ";
+            $updates = [];
+            foreach ($theatres as $theatre => $score) {
+                $updates[] = sprintf("%s = %d", $theatre, $score);
+            }
+            $query .= sprintf("%s WHERE player_id = %d", implode(", ", $updates), $player_id);
+            self::DbQuery($query);
+        }
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////
@@ -284,7 +330,6 @@ class airlandseaelliotr extends Table
     {
         self::checkAction("playCard");
         self::error("what is faceup?");
-        self::error($faceUp);
         $player_id = self::getActivePlayerId();
         // XXX check rules here
         $currentCard = $this->cards->getCard($card_id);
@@ -295,11 +340,13 @@ class airlandseaelliotr extends Table
         if ($faceUp && $target_theatre !== $theatre) {
             throw new BgaUserException("That card can't go there!");
         }
-        // self::error()
-        // self::error("target theatre: ", $target_theatre, "\ntheatre: ", $theatre);
-        // if ($theatre !== $target_theatre)
+
 
         $this->cards->moveCard($card_id, $this->theatre_name[$target_theatre], $player_id);
+        self::flipCard($card_id, $faceUp);
+        $scores = self::calculateRoundScore();
+        self::updateRoundscore($scores);
+
         // And notify
         self::notifyAllPlayers(
             'playCard',
@@ -315,6 +362,15 @@ class airlandseaelliotr extends Table
                 'color_displayed' => $this->theatres[$currentCard['type']]['name'],
                 'theatre' => $target_theatre,
                 'faceUp' => $faceUp,
+            )
+        );
+
+
+        self::notifyAllPlayers(
+            'newTheatreScore',
+            '',
+            array(
+                'scores' => $scores
             )
         );
         // Next player

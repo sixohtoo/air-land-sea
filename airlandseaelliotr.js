@@ -63,13 +63,37 @@ function (dojo, declare) {
         setup: function( gamedatas )
         {
             console.log( "Starting game setup" );
-            console.log(gamedatas.order)
+            console.log(gamedatas)
+
+            // this.counter = ebg.counter()
+            this.counters = {}
+
+            // let theatres = gamedatas.order.sort9)
+            // let colors = ['⚪', '🟢', '🔵']
+            let colors = {
+                'Air': '⚪',
+                'Land': '🟢',
+                'Sea': '🔵'
+            }
             
             // Setting up player boards
             for( var player_id in gamedatas.players )
             {
+                this.counters[player_id] = {}
                 var player = gamedatas.players[player_id];
-                         
+                for (let index in gamedatas.order) {
+                    let theatre = gamedatas.order[index]
+                    console.log(theatre)
+                    let color = colors[theatre]
+                    let player_board_div = $('player_board_' + player_id)
+                    let score = gamedatas.scores[player_id][theatre]
+                    dojo.place(this.format_block('jstpl_player_board', {player: player_id, theatre, color}), player_board_div)
+                    this.counters[player_id][theatre] = new ebg.counter()
+                    this.counters[player_id][theatre].create(`score_${theatre}_${player_id}`)
+                    this.counters[player_id][theatre].setValue(score)
+                    // this.counter.create(`score_${theatre}_${player_id}`)
+                }
+                
                 // TODO: Setting up players boards if needed
             }
             
@@ -109,7 +133,7 @@ function (dojo, declare) {
                     let cards = players[player];
                     for (let i in cards) {
                         let card = cards[i];
-                        this.addCardToTheatre(theatre, card.type, card.type_arg, player, card.id, false)
+                        this.addCardToTheatre(theatre, card.type, card.type_arg, player, card.id, card.face_up)
                         // add_card()
                     }
                 }
@@ -118,8 +142,8 @@ function (dojo, declare) {
             console.log(gamedatas.players)
             // console.log('here')
             // console.log($('.elliot'))
-            let theatres = ['Air', 'Land', 'Sea']
-            theatres.forEach(theatre => {
+            // let theatres = ['Air', 'Land', 'Sea']
+            gamedatas.order.forEach(theatre => {
                 // console.log($(`theatre_picture_${theatre}`))
                 // $(`theatre_picture_${theatre}`).onclick = this.onClickTheatre
                 $(`theatre_picture_${theatre}`).onclick = (e) => this.onClickTheatre(e)
@@ -427,6 +451,9 @@ function (dojo, declare) {
 
         onPlayerHandSelectionChanged : function() {
             var items = this.playerHand.getSelectedItems();
+            if (!this.checkAction('playCard', true)) {
+                this.playerHand.unselectAll();
+            }
 
             // if (items.length == 1) {
             //     var action = 'playCard';
@@ -524,6 +551,7 @@ function (dojo, declare) {
 
             dojo.subscribe('newHand', this, "notif_newHand");
             dojo.subscribe('playCard', this, "notif_playCard");
+            dojo.subscribe('newTheatreScore', this, "notif_newTheatreScore")
 
         },
 
@@ -550,6 +578,42 @@ function (dojo, declare) {
             face_up = notif.args.faceUp
             this.addCardToTheatre(theatre, color, number, player_id, card_id, face_up, true)
         },
+
+        notif_newTheatreScore : function(notif) {
+            console.log('in newTheatreScore', notif)
+            // notif.args.scores.forEach(player_id => {})
+            let scores = notif.args.scores;
+
+            for (let player_id in scores) {
+                for (let theatre in scores[player_id]) {
+                    let score = scores[player_id][theatre]
+                    this.counters[player_id][theatre].toValue(score)
+                }
+            }
+
+            // for (let player_id in scores) {
+            //     for (let theatre in scores[player_id]) {
+            //         let score = scores[player_id][theatre]
+            //         $(`score_${theatre}_${player_id}`).value = score
+            //     }
+            // }
+
+
+            // scores.forEach(player_id => {
+            // for (let player_id in scores) {
+            //     scores[player_id].forEach(theatre => {
+            //         let score = scores[player_id][theatre]
+            //         $(`theatre_scores_${theatre}_${player_id}`).value = score
+            //     })
+            // }
+            // for (let i in scores) {
+            //     player_id = scores[i]
+            //     for (let j in scores[i][player_id]) {
+            //         let theatre = scores[i][player_id][j]
+            //         $(`theatre_scores_${theatre}_${player_id}`).value = 
+            //     }
+            // }
+        }
         
         
         // TODO: from this point and below, you can write your game notifications handling methods
