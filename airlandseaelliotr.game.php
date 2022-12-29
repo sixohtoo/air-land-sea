@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * airlandseaelliotr implementation : © <Your name here> <Your email address here>
+ * airlandseaelliotr implementation : © Elliot Rotenstein elliot@balgara.com
  * 
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -113,12 +113,12 @@ class airlandseaelliotr extends Table
         $this->cards->createCards($cards, 'deck');
 
         // Shuffle deck
-        $this->cards->shuffle('deck');
-        // Deal 13 cards to each players
-        $players = self::loadPlayersBasicInfos();
-        foreach ($players as $player_id => $player) {
-            $cards = $this->cards->pickCards(6, 'deck', $player_id);
-        }
+        // $this->cards->shuffle('deck');
+        // // Deal 13 cards to each players
+        // $players = self::loadPlayersBasicInfos();
+        // foreach ($players as $player_id => $player) {
+        //     $cards = $this->cards->pickCards(6, 'deck', $player_id);
+        // }
 
 
 
@@ -142,6 +142,7 @@ class airlandseaelliotr extends Table
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
         self::setGameStateInitialValue('first_player', self::getActivePlayerId());
+        self::DbQuery(sprintf("UPDATE player SET player_1 = 1 where player_id = %d", self::getActivePlayerId()));
 
         /************ End of the game initialization *****/
     }
@@ -227,14 +228,6 @@ class airlandseaelliotr extends Table
     In this space, you can put any utility methods useful for your game logic
     */
 
-    public function console_log($data)
-    {
-        $output = $data;
-        if (is_array($output))
-            $output = implode(',', $output);
-
-        echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
-    }
 
     public function get_theatre_order()
     {
@@ -249,20 +242,11 @@ class airlandseaelliotr extends Table
     public function get_player_ids()
     {
         $players = self::getNextPlayerTable();
-        array_pop($players);
 
-        $current_player_id = self::getCurrentPlayerId();
-
-        // 2 player game always
-        // $player_ids[0] is current player
-        // $player_ids[1] is other player
-        $player_ids = array($current_player_id);
-
-        foreach ($players as $player_id => $player) {
-            if ($player_id != $current_player_id) {
-                $player_ids[] = $player_id;
-            }
-        }
+        $player_ids = array(
+            $players[0]
+        );
+        $player_ids[] = $players[$players[0]];
 
         return $player_ids;
     }
@@ -283,7 +267,7 @@ class airlandseaelliotr extends Table
 
     public function calculateRoundScore()
     {
-        $theatres = ['Air', 'Land', 'Sea'];
+        $theatres = self::get_theatre_order();
         $player_ids = self::get_player_ids();
         $scores = [
             $player_ids[0] => [],
@@ -336,7 +320,10 @@ class airlandseaelliotr extends Table
         $theatre = $currentCard['type']; // TODO: Gottsta change this later when playing cards on wrong theatre
 
         // TODO: Rules checking wop wop
-        self::warn(sprintf("target is %d whereas theatre is %d", $target_theatre, $theatre));
+        // self::warn(sprintf("target is %d whereas theatre is %d", $target_theatre, $theatre));
+        self::warn(print_r(self::getNextPlayerTable(), true));
+        self::warn(self::getActivePlayerId());
+        self::warn(self::getCurrentPlayerId());
         if ($faceUp && $target_theatre !== $theatre) {
             throw new BgaUserException("That card can't go there!");
         }
@@ -413,10 +400,25 @@ class airlandseaelliotr extends Table
     game state.
     */
 
+    function stNewRound()
+    {
+        // set all cards to faceup
+        self::DbQuery("UPDATE card SET face_up = 1");
+        // change theatre order
+        self::DbQuery("UPDATE theatres SET order = (order + 1) % 3");
+        // change first player
+        self::DbQuery("UPDATE player SET player_1 = !player_1");
+
+        // TODO: gotta change the active player potentially
+        // if 1st player stays the same, need to active next player
+
+        $this->gameState->nextState("");
+    }
 
     # called when dealing cards ot each player
     function stNewHand()
     {
+        self::error("start of stNewHand");
         // take back all cards (from any location -> null) to deck
         $this->cards->moveAllCardsInLocation(null, "deck");
         $this->cards->shuffle('deck');
@@ -430,6 +432,17 @@ class airlandseaelliotr extends Table
             self::notifyPlayer($player_id, 'newHand', '', array('cards' => $cards));
         }
 
+        // self::calculateRoundScore();
+        self::error("WHERE ARE U");
+        self::error(print_r(self::calculateRoundScore(), true));
+        self::notifyAllPlayers(
+            'newTheatreScore',
+            '',
+            array(
+                'scores' => self::calculateRoundScore()
+            )
+        );
+
         // need to swap players here. will worry about later
         $this->gamestate->nextState("");
     }
@@ -439,11 +452,14 @@ class airlandseaelliotr extends Table
     {
         // make next player active OR end round
         $players_ids = self::get_player_ids();
-        // $cards_played = count($this->cards->getCardsInLocation('hand', $players_ids[0]))
-        $cards_remaining = $this->cards->countcardsInLocation('hand');
+        // $cards_played = count($this->cards->getCardsInLocation('hand', $players_ids[0]));
+        $cards_remaining = 0;
+        foreach ($players_ids as $player_id) {
+            $cards_remaining += $this->cards->countCardsInLocation('hand', $player_id);
+        }
 
         // All dealt cards have been played -> end round
-        if ($cards_remaining == 0) {
+        if ($cards_remaining == 8) {
             // deal with player scores and check if player reached 12 points
             $this->gamestate->nextState("endRound");
         } else {
@@ -460,6 +476,43 @@ class airlandseaelliotr extends Table
 
     function stRoundEnd()
     {
+
+        // // check who won this round
+        $scores = self::calculateRoundScore();
+        $player_ids = self::get_player_ids();
+        $theatres = self::get_theatre_order();
+
+        $player_2 = self::getActivePlayerId();
+        $player_1 = $player_ids[0] == $player_2 ? $player_ids[1] : $player_ids[0];
+
+        $p1_count = 0;
+        $p2_count = 0;
+
+        foreach ($theatres as $theatre) {
+            $p1_score = $scores[$player_1][$theatre];
+            $p2_score = $scores[$player_2][$theatre];
+            if ($p2_score > $p1_score) {
+                $p2_count += 1;
+            } else {
+                $p1_count += 1;
+            }
+        }
+
+        $roundWinner = $p1_count >= $p2_count ? $player_1 : $player_2;
+
+        self::DbQuery("UPDATE player SET player_score=player_score + 6 WHERE player_id='" . $roundWinner . "'");
+
+        $query = sprintf("SELECT player_id id, player_score score FROM player order by player_score DESC LIMIT 1");
+        $currWinning = self::GetObjectFromDB($query);
+
+
+        if ($currWinning['score'] >= 12) {
+            $this->gamestate->nextState("endGame");
+        } else {
+            $this->gamestate->nextState("newRound");
+        }
+
+
         // figure out if someone has hit 12 points
         //  -> then end game
         // otherwise start next round

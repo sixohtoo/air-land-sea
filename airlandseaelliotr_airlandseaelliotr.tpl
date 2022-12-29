@@ -26,7 +26,6 @@
 -->
 
 
-This is your game interface. You can edit this HTML in your ".tpl" file.
 
 
 <div id="theatres" class="elliot">

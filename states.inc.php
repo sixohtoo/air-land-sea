@@ -75,6 +75,15 @@ $machinestates = array(
         "action" => "stNewHand",
         "transitions" => array("" => 10)
     ),
+
+    3 => array(
+        "name" => "setupNewRound",
+        "description" => "",
+        "type" => "game",
+        "action" => "stNewRound",
+        "transitions" => array("" => 2)
+    ),
+
     // play a card
     10 => array(
         "name" => "playerTurn",
@@ -82,7 +91,7 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "activeplayer",
         "possibleactions" => array('playCard'),
-        "transitions" => array("playCard" => 11, "endRound" => 98)
+        "transitions" => array("playCard" => 11, "forfeit" => 98)
     ),
     // go to next player
     11 => array(
@@ -97,7 +106,7 @@ $machinestates = array(
         "type" => "game",
         "action" => "stRoundEnd",
         "updateGameProgression" => true,
-        "transitions" => array("endGame" => 99, "newRound" => 2)
+        "transitions" => array("endGame" => 99, "newRound" => 3)
     ),
     99 => array(
         "name" => "gameEnd",

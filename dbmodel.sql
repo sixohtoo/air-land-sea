@@ -36,6 +36,7 @@ ALTER TABLE `card` ADD `face_up` BOOLEAN DEFAULT TRUE;
 -- ALTER TABLE 'card' ADD 'face_up' BOOLEAN DEFAULT '0';
 
 
+ALTER TABLE `player` ADD `player_1` BOOLEAN DEFAULT FALSE;
 ALTER TABLE `player` ADD `Air` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Land` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Sea` int(3) DEFAULT '0';
