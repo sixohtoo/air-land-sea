@@ -97,7 +97,7 @@ function (dojo, declare) {
                 // TODO: Setting up players boards if needed
             }
             
-            this.player_id = gamedatas.player_ids[0];
+            // this.player_id = this.get;
             // TODO: Set up your game interface here, according to "gamedatas"
  
             this.playerHand = new ebg.stock();

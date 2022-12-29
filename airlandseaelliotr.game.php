@@ -464,7 +464,8 @@ class airlandseaelliotr extends Table
             $this->gamestate->nextState("endRound");
         } else {
             // else next player's turn to place a card.
-            $player_id = self::activeNextPlayer();
+            self::activeNextPlayer();
+            $player_id = self::getActivePlayerId();
             self::giveExtraTime($player_id);
             $this->gamestate->nextState("nextTurn");
         }
