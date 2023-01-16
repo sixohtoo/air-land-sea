@@ -40,6 +40,12 @@ $this->theatre_name = array(
     3 => "Sea"
 );
 
+$this->theatre_row = array(
+    "Air" => 1,
+    "Land" => 2,
+    "Sea" => 3
+);
+
 
 $this->values_label = array(
     1 => '1',
@@ -87,21 +93,21 @@ $this->score_card = array(
     'Air3' => 'normal_scoring',
     'Air4' => 'normal_scoring',
     'Air5' => 'normal_scoring',
-    'Air6' => 'covered_4_scoring',
+    'Air6' => 'normal_scoring',
 
-    'Land1' => 'adjacent_3_scoring',
+    'Land1' => 'normal_scoring',
     'Land2' => 'normal_scoring',
     'Land3' => 'normal_scoring',
     'Land4' => 'covered_4_scoring',
     'Land5' => 'normal_scoring',
-    'Land6' => 'covered_4_scoring',
+    'Land6' => 'normal_scoring',
 
     'Sea1' => 'normal_scoring',
     'Sea2' => 'facedown_4_scoring',
     'Sea3' => 'normal_scoring',
     'Sea4' => 'normal_scoring',
     'Sea5' => 'normal_scoring',
-    'Sea6' => 'covered_4_scoring',
+    'Sea6' => 'normal_scoring',
 );
 
 

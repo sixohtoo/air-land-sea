@@ -352,18 +352,20 @@ class airlandseaelliotr extends Table
 
     public function makeRecentCard($card_id)
     {
+        self::error(sprintf("%s is now the recent card", $card_id));
         self::DbQuery(sprintf("UPDATE card SET recent = !recent WHERE recent = 1 OR card_id = %d", $card_id));
     }
 
     public function getRecentCard()
     {
-        return self::getObjectFromDB("SELECT card_id id, card_location location, card_location_arg location_arg, face_up FROM card WHERE recent = 1");
+        return self::getObjectFromDB("SELECT card_id id, card_location location, card_location_arg location_arg, face_up, card_type type, card_type_arg type_arg FROM card WHERE recent = 1");
     }
 
     public function getNextState()
     {
-        $sql = "SELECT card_type type, card_type_arg type_arg, card_location_arg location_arg, face_up FROM card WHERE recent = 1";
-        $card = self::getObjectFromDB($sql);
+        $card = self::getRecentCard();
+        // $sql = "SELECT card_type type, card_type_arg type_arg, card_location_arg location_arg, face_up FROM card WHERE recent = 1";
+        // $card = self::getObjectFromDB($sql);
 
         $state = $card['face_up'] ? $this->card_to_state[$this->theatre_name[$card['type']] . $card['type_arg']] : 'playCard';
         if (array_search($state, $this->strange_order_states) !== false && $card['face_up']) {
@@ -393,8 +395,14 @@ class airlandseaelliotr extends Table
     public function checkCardPlayed($type, $num)
     {
         // get card
-        $sql = "SELECT card_location location, face_up FROM card WHERE (card_type LIKE '%s') AND (card_type_arg = %d)";
+        // $sql = sprintf("SELECT ")
+        // $type = array_search($type, self::get_theatre_order()) + 1;
+        $type = $this->theatre_row[$type];
+        self::error(sprintf("type is %s and num is %s", $type, $num));
+        $sql = sprintf("SELECT card_location location, face_up FROM card WHERE (card_type LIKE '%s') AND (card_type_arg = %d)", $type, $num);
         $card = self::getObjectFromDB($sql);
+        self::error("checkCardPlayed card is:");
+        self::error(print_r($card, true));
         if (array_search($card['location'], self::get_theatre_order()) !== false && $card['face_up']) {
             return array_search($card['location'], self::get_theatre_order());
         } else {
@@ -728,6 +736,7 @@ class airlandseaelliotr extends Table
     // TODO: flip opponent's flip card. They could have a flip turn then a play turn
     function stNextPlayer()
     {
+
         // make next player active OR end round
         $players_ids = self::get_player_ids();
         // $cards_played = count($this->cards->getCardsInLocation('hand', $players_ids[0]));
@@ -735,6 +744,9 @@ class airlandseaelliotr extends Table
         foreach ($players_ids as $player_id) {
             $cards_remaining += $this->cards->countCardsInLocation('hand', $player_id);
         }
+
+        // Potentially destroy card before ending round.
+        self::checkDestroy();
 
         // All dealt cards have been played -> end round
         if ($cards_remaining == 0) {
@@ -807,7 +819,8 @@ class airlandseaelliotr extends Table
         // otherwise start next round
     }
 
-    function stCheckDestroy()
+    // TODO: Move function to more relevant place (no longer a state action)
+    function checkDestroy()
     {
         $card = self::getRecentCard();
         $theatre_index = array_search($card['location'], self::get_theatre_order());
@@ -817,7 +830,13 @@ class airlandseaelliotr extends Table
         // air 5 (no face down)
         // sea 5 (3 in adjacent columns)
         $theatre = self::checkCardPlayed('Air', 5);
+        self::error(sprintf("check card player air 5 returned %s %s", $theatre, $theatre !== false));
+        self::error(sprintf("%s %s", $theatre !== false ? 'true' : 'false', !$card['face_up'] ? 'true' : 'false'));
+        if ($theatre === false) {
+            self::error('rip theatre is false');
+        }
         if ($theatre !== false && !$card['face_up']) {
+            self::error('boutta destroy cos air 5');
             $destroy = true;
             $reason = "5 Air";
         }
@@ -825,17 +844,22 @@ class airlandseaelliotr extends Table
         $theatre = self::checkCardPlayed('Sea', 5);
         if ($theatre !== false && abs($theatre - $theatre_index) === 1) {
             $num_cards = $this->cards->countCardsInLocation($card['location']);
-            if ($num_cards >= 3) {
+            if ($num_cards > 3) {
                 $destroy = true;
                 $reason = "5 Sea";
             }
         }
 
         if ($destroy) {
-            $this->card->playCard($card['id']);
+            self::error("Destroying the card");
+            // self::error(print_r($card, true));
+            $this->cards->playCard($card['id']);
+            $sql = "UPDATE card SET face_up = 0 WHERE recent = 1";
+            self::DbQuery($sql);
+            // $this->card->removeFromStock
             self::notifyAllPlayers(
                 'destroyCard',
-                clienttranslate('${player_name}\'s ${value_displayed} ${color_displayed} is destroyed by ${owner_name}\'s ${reason}'),
+                clienttranslate('${active_name}\'s ${value_displayed} ${color_displayed} is destroyed by ${owner_name}\'s ${reason}'),
                 array(
                     'i18n' => array('color_displayed', 'value_displayed'),
                     'active_name' => self::getActivePlayerName(),
@@ -849,18 +873,8 @@ class airlandseaelliotr extends Table
                 )
             );
 
-            $score = self::calculateRoundScore();
-            self::notifyAllPlayers(
-                'newTheatreScore',
-                '',
-                array(
-                    'score' => $score
-                )
-            );
+            self::updateRoundScore(self::calculateRoundScore());
         }
-
-        $this->gamestate->nextState("");
-
     }
 
     function stMoveCard($src_theatre, $dest_theatre, $index)
