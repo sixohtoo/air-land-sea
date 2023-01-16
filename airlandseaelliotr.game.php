@@ -255,6 +255,27 @@ class airlandseaelliotr extends Table
         return $player_ids;
     }
 
+    // e.g. checkPlayerPlayedCard('Air', 4, 22342423592)
+    public function checkPlayerPlayedCard($type, $num, $player)
+    {
+        $type = $this->theatre_row[$type];
+        $sql = sprintf("SELECT card_id id FROM card WHERE (card_type LIKE '%s') AND (card_type_arg = %d) AND (card_location_arg = %d) AND (face_up = 1)", $type, $num, $player);
+        $card = self::getObjectFromDB($sql);
+        return $card !== null;
+    }
+
+    public function checkValidTheatre($card, $theatre, $face_up)
+    {
+        // $type = $this->theatre_row[$card[]];
+        if (!$face_up) {
+            return true;
+        } else if ($card['type_arg'] <= 3 && self::checkPlayerPlayedCard('Air', 4, self::getActivePlayerId())) {
+            return true;
+        } else {
+            return $card['type'] === $theatre;
+        }
+    }
+
     // TODO: remove sqli issues
     public function getCardsInLocation($location, ...$location_arg)
     {
@@ -501,9 +522,12 @@ class airlandseaelliotr extends Table
         // XXX check rules here
         $currentCard = $this->cards->getCard($card_id);
         $theatre = $currentCard['type'];
-        if ($faceUp && $target_theatre !== $theatre) {
+        if (!self::checkValidTheatre($currentCard, $target_theatre, $faceUp)) {
             throw new BgaUserException("That card can't go there!");
         }
+        // if ($faceUp && $target_theatre !== $theatre) {
+        //     throw new BgaUserException("That card can't go there!");
+        // }
 
         self::makeRecentCard($card_id);
 
@@ -911,13 +935,14 @@ class airlandseaelliotr extends Table
 
     function argFlipCard()
     {
-        $sql = "SELECT card_type theatre, card_type_arg num, card_location_arg player_id FROM card where recent = 1";
+        $sql = "SELECT card_location theatre, card_type_arg num, card_location_arg player_id FROM card where recent = 1";
         $played_card = self::getObjectFromDB($sql);
         self::error("recent is");
         self::error(print_r($played_card, true));
         // self::error(sprintf("recent is %s", print_r($played_card)));
         $num = $played_card['num'];
-        $theatre = $this->theatre_name[$played_card['theatre']];
+        $theatre = $played_card['theatre'];
+        // $theatre = $this->theatre_name[$played_card['theatre']];
         $player_list = self::getNextPlayerTable();
         $theatre_list = self::get_theatre_order();
 

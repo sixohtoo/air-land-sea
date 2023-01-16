@@ -24,6 +24,15 @@
 * 5: 3 or less cards in adjacent
 
 
+## stuff left
+* Air 2 (next card to non matching)             !!
+* Air 4 (3 or less anywhere)                    !
+* Land 1 (Draw and play facedown)               !!!
+* Land 5 (you flip, then opponent flips)        !!
+* Sea 1 (move card anywhere)                    !
+* Sea 4 (pick ujp facedown and play another)    !!
+* 
+
 ## stuff to code
 * move cards (1) -> choose card + theatre
 * flip cards (5) -> choose a card
