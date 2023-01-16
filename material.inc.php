@@ -40,6 +40,7 @@ $this->theatre_name = array(
     3 => "Sea"
 );
 
+
 $this->values_label = array(
     1 => '1',
     2 => '2',
@@ -51,11 +52,60 @@ $this->values_label = array(
 
 $this->max_points = 12;
 
-/*
-Example:
-$this->card_types = array(
-1 => array( "card_name" => ...,
-...
-)
+$this->card_to_state = array(
+    'Air1' => 'playCard',
+    'Air2' => 'playCard',
+    'Air3' => 'flipCard',
+    'Air4' => 'playCard',
+    'Air5' => 'playCard',
+    'Air6' => 'playCard',
+
+    # drawCard
+    'Land1' => 'playCard',
+    'Land2' => 'flipCard',
+    'Land3' => 'flipCard',
+    'Land4' => 'playCard',
+    # flipCard
+    'Land5' => 'playCard',
+    'Land6' => 'playCard',
+
+    # moveCard
+    'Sea1' => 'playCard',
+    'Sea2' => 'playCard',
+    'Sea3' => 'flipCard',
+    # 2ndTurn
+    // 'Sea4' => 'flipCard',
+    'Sea4' => 'playCard',
+    'Sea5' => 'playCard',
+    // 'Sea5' => 'playCard',
+    'Sea6' => 'playCard',
 );
-*/
+
+$this->score_card = array(
+    'Air1' => 'adjacent_3_scoring',
+    'Air2' => 'normal_scoring',
+    'Air3' => 'normal_scoring',
+    'Air4' => 'normal_scoring',
+    'Air5' => 'normal_scoring',
+    'Air6' => 'covered_4_scoring',
+
+    'Land1' => 'adjacent_3_scoring',
+    'Land2' => 'normal_scoring',
+    'Land3' => 'normal_scoring',
+    'Land4' => 'covered_4_scoring',
+    'Land5' => 'normal_scoring',
+    'Land6' => 'covered_4_scoring',
+
+    'Sea1' => 'normal_scoring',
+    'Sea2' => 'facedown_4_scoring',
+    'Sea3' => 'normal_scoring',
+    'Sea4' => 'normal_scoring',
+    'Sea5' => 'normal_scoring',
+    'Sea6' => 'covered_4_scoring',
+);
+
+
+
+$this->strange_order_states = array(
+    'flipCard'
+);

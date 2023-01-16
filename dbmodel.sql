@@ -26,13 +26,14 @@ CREATE TABLE IF NOT EXISTS `card` (
     `card_type_arg` int(11) NOT NULL,
     `card_location` varchar(16) NOT NULL,
     `card_location_arg` int(11) NOT NULL,
-    -- 'face_up' int(10) unsigned NOT NULL AUTO_INCREMENT,
     PRIMARY KEY (`card_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 -- Example 2: add a custom field to the standard "player" table
 ALTER TABLE `card` ADD `face_up` BOOLEAN DEFAULT TRUE;
+ALTER TABLE `card` ADD `recent` BOOLEAN DEFAULT FALSE;
+ALTER TABLE `card` ADD `position` int(10) DEFAULT -1;
 -- ALTER TABLE 'card' ADD 'face_up' BOOLEAN DEFAULT '0';
 
 
@@ -40,11 +41,12 @@ ALTER TABLE `player` ADD `player_1` BOOLEAN DEFAULT FALSE;
 ALTER TABLE `player` ADD `Air` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Land` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Sea` int(3) DEFAULT '0';
+ALTER TABLE `player` ADD `next_player` int(3) DEFAULT '0';
 
 
 
 CREATE TABLE IF NOT EXISTS `theatres` (
     `theatre` varchar(16) NOT NULL,
-    `order` int(16) NOT NULL,
+    `position` int(16) NOT NULL,
     PRIMARY KEY (`theatre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -123,57 +123,33 @@ function (dojo, declare) {
                 let id = this.getCardUniqueId(color, value)
                 this.playerHand.addToStockWithId(id, card.id);
             }
-
+            // debugger;
             this.table = {}
             for (let theatre in gamedatas.table) {
                 this.table[theatre] = {}
                 let players = gamedatas.table[theatre];
                 for (let player in players) {
                     this.table[theatre][player] = []
-                    let cards = players[player];
+                    let cards = Object.values(players[player]);
+                    cards.sort(function(a, b) {return a['position'] - b['position']})
                     for (let i in cards) {
                         let card = cards[i];
-                        this.addCardToTheatre(theatre, card.type, card.type_arg, player, card.id, card.face_up)
-                        // add_card()
+                        console.log(card.type_arg, card.face_up);
+
+                        this.addCardToTheatre(theatre, card.type, card.type_arg, player, card.id, parseInt(card.face_up))
                     }
                 }
             }
 
+            this.theatres = gamedatas.order;
             console.log(gamedatas.players)
-            // console.log('here')
-            // console.log($('.elliot'))
-            // let theatres = ['Air', 'Land', 'Sea']
-            gamedatas.order.forEach(theatre => {
-                // console.log($(`theatre_picture_${theatre}`))
-                // $(`theatre_picture_${theatre}`).onclick = this.onClickTheatre
-                $(`theatre_picture_${theatre}`).onclick = (e) => this.onClickTheatre(e)
-                // console.log($(`theatre_cards_${theatre}_${this.player_id}`))
-                $(`theatre_cards_${theatre}_${this.player_id}`).onclick = (e) => this.onClickTheatre(e)
-                // $(`theatre_picture_${theatre}`).onclick = onClickTheatre
-
-            })
-            // debugger;
-            // $('myhand').each(function() {
-            //     console.log('jo')
+            // gamedatas.order.forEach(theatre => {
+            //     $(`theatre_picture_${theatre}`).onclick = (e) => this.onClickTheatre(e)
+            //     $(`theatre_cards_${theatre}_${this.player_id}`).onclick = (e) => this.onClickTheatre(e)
             // })
-            // $('div').each(function() {
-            //     console.log('hello')
-            // })
-
-            // let table = gamedatas.table;
-            // for (let theatre in table) {
-            //     for (let card in theatre) {
-            //         let color = card.type;
-            //         let value = card.type_arg;
-            //         let player_id = card.location_arg;
-            //         this.playCardOnTable(player_id, color, value, theatre, card.id)
-            //     }
-            // }
-            // this.playerHand.addToStockWithId(this.getCardUniqueId(2, 3), 10)
-            // this.playerHand.addToStockWithId(this.getCardUniqueId(3, 1), 1)
 
             dojo.connect(this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged');
- 
+
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
 
@@ -203,10 +179,35 @@ function (dojo, declare) {
                 
                 break;
            */
+            case 'playerTurn':
+                this.theatres.forEach(theatre => {
+                    $(`theatre_picture_${theatre}`).onclick = (e) => this.onClickTheatre(e)
+                    $(`theatre_cards_${theatre}_${this.player_id}`).onclick = (e) => this.onClickTheatre(e)
+                });
+                break;
+
+            case 'flipCard':
+                console.log("args is args", args);
+                args.args.players.forEach(player => {
+                    args.args.theatres.forEach(theatre => {
+                        area = document.getElementById(`theatre_cards_${theatre}_${player}`)
+                        children = area.children;
+                        if (children.length) {
+                            console.log('area is', area);
+                            console.log('child is', children)
+                            last = children[children.length - 1]
+                            last.onclick = (e) => this.flipCard(e)
+                            last.classList.add('clickable')
+                        }
+
+                    })
+                })
+                break;
             
             case 'dummmy':
                 break;
             }
+
         },
 
         // onLeavingState: this method is called each time we are leaving a game state.
@@ -229,7 +230,25 @@ function (dojo, declare) {
                 break;
            */
            
-           
+            case 'playerTurn':
+                this.theatres.forEach(theatre => {
+                    $(`theatre_picture_${theatre}`).onclick = () => {}
+                    $(`theatre_cards_${theatre}_${this.player_id}`).onclick = () => {}
+                });
+                break;
+            case 'flipCard':
+                let clickables = document.getElementsByClassName('clickable');
+                for (let i = 0; i < clickables.length; i++) {
+                    let elem = clickables[i];
+                    elem.classList.remove('clickable')
+                    elem.onclick = () => {}
+                }
+                // debugger;
+                // document.getElementsByClassName('clickable').forEach(elem => {
+                //     elem.classList.remove('clickable')
+                //     elem.onclick = () => {}
+                // })
+                break;
             case 'dummmy':
                 break;
             }               
@@ -248,11 +267,12 @@ function (dojo, declare) {
                 switch( stateName )
                 {
                     case 'playerTurn':
-                        // this.addActionButton('playCardUp_button', _('Play face up'), 'playCardFaceUp');
-                        // this.addActionButton('playCardDown_button', _('Play face down'), 'playCardFaceDown');
-                        // this.addActionButton('cancel_button', _('Cancel'), 'cancelAction');
-                        // this.addActionButton('forfeit_button', _('Forfeit'), 'forfeitRound', null, false, 'red');
-                        // this.addActionButton('elliot_button', _('Click me'), () => this.testButton('hello'), null, false, 'red');
+                        break;
+                    case 'flipCard':
+                        this.addActionButton('dont_flip', _('Don\'t flip anything'), 'button_noFlip');
+                        break;
+                    case 'moveCard':
+                        this.addActionButton('dont_move', _('Don\'t move anything'), 'button_noMove');
                         break;
 /*               
                  Example:
@@ -301,13 +321,10 @@ function (dojo, declare) {
             return this.colorToRow[color]
         },
 
+
         addCardToTheatre: function (theatre, color, number, playerId, divid, faceUp, fromHand) {
-            
-            // let mode = 'only';
-            debugger;
             const cards = this.table[theatre][playerId];
             // debugger;
-            // make every card already placed in target theatre stacked
             for (let i in cards) {
                 let target = cards[i];
                 let cardDiv = $('theatre_cards_' + target.divid);
@@ -323,84 +340,57 @@ function (dojo, declare) {
                 isFlipped: false,
                 divid
             }
-            // card = parseInt(card);
-            // array_push(cards, card);
+
             cards.push(card);
 
-            // 1 -> 0
-            // 2 -> 20
-            // 3 -> 40
-            // 4 -> 60
             let to = 'theatre_cards_' + theatre + '_' + playerId;
-            debugger;
+            // debugger;
             let y = faceUp ? parseInt(card.color) * 33.33 : 0;
+            let x = faceUp ? (card.number - 1) * 20 : 0;
             dojo.place(this.format_block('jstpl_placed_card', {
                 y,
-                x: (card.number - 1) * 20,
+                x,
                 z: cards.length, // TODO: Change when can remove cards
                 CARD_ID: divid
-                // CARD_ID: card.id
             }), to, 'last');
 
-            console.log("div id is", divid)
+            // console.log("div id is", divid)
             // Opponent placed card
             if (playerId != this.player_id && fromHand) {
                 this.placeOnObject('theatre_cards_' + divid, 'overall_player_board_' + playerId);
             }
             else if (fromHand) {
                 // TODO may need ot check if card came from hand for Land1s
-                // this.placeOnObject('theatre_cards_' + card.id, 'myhand_item_' + divid)
                 this.placeOnObject('theatre_cards_' + divid, 'myhand_item_' + divid)
                 this.playerHand.removeFromStockById(divid)
             }
 
             this.slideToObject('theatre_cards_' + divid, to).play()
-            // this.slideToObject('theatre_cards_' + card.id, to).play()
-
         },
-
-        // playCard : function() {
-        //     let {}
-        // },
-
-
+        
+        
+        
         ///////////////////////////////////////////////////
         //// Player's action
         
         /*
         
-            Here, you are defining methods to handle player's action (ex: results of mouse click on 
+        Here, you are defining methods to handle player's action (ex: results of mouse click on 
             game objects).
             
             Most of the time, these methods:
             _ check the action is possible at this game state.
             _ make a call to the game server
-        
-        */
-       /**
-        * plan
-        * * when clicking card
-        *       * if 0 cards selected, select card
-        *       * if 1 card selected, select new card, unselect old card
-        * 
-        */
-        // playCardFaceUp : function() {
-        //     console.log("playing face up");
-        // },
-
-
-        // playCardFaceDown : function() {
-        //     console.log("playing face down");
-        // },
-
-        // cancelAction : function() {
-        //     console.log("cancelling action");
-        // },
-
-        // forfeitRound : function() {
-        //     console.log('forfeitting');
-        // },
-
+            
+            */
+           /**
+            * plan
+            * * when clicking card
+            *       * if 0 cards selected, select card
+            *       * if 1 card selected, select new card, unselect old card
+            * 
+           */
+          
         playCard : function(faceUp, theatre, card_id) {
             console.log(faceUp, theatre, card_id)
             let action = 'playCard'
@@ -410,17 +400,32 @@ function (dojo, declare) {
                 faceUp: faceUp,
                 lock : true
             }, this, this.playCardAjaxSuccessful, this.playCardAjaxFail);
-
+            
         },
-
+            
+            
+        flipCard : function(target) {
+            console.log(target)
+            let action = 'flipCard'
+            let parent = target.target.parentNode;
+            let parent_id = parent.id.split('_');
+            let theatre = parent_id[2];
+            let player_id = parent_id[3];
+            debugger;
+            // card_id = target.target.
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                theatre: this.colorToRow[theatre],
+                player_id,
+                lock : true
+            }, this, this.flipCardAjaxSuccessful, this.flipCardAjaxFail);
+            
+        },
         // TODO: bug! have to already have selected a card. will fix later
         onClickTheatre : function(event) {
-            debugger;
             let theatre = event.target.id.split('_')[2]
             console.log(theatre)
             let items = this.playerHand.getSelectedItems()
             let action = 'playCard'
-            // this.addActionButton()
             if (this.checkAction(action, true) && items.length) {
                 let card_id = items[0].id
                 this.removeActionButtons()
@@ -428,24 +433,25 @@ function (dojo, declare) {
                 this.addActionButton('playCardDown_button', _('Play face down'), () => this.playCard(false, theatre, card_id));
             }
 
-            // if (this.checkAction(action, true) && items.length) {
-            //     let card_id = items[0].id;                    
-            //     this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
-            //         id : card_id,
-            //         theatre: this.colorToRow[theatre],
-            //         lock : true
-            //     }, this, this.playCardAjaxSuccessful, function(is_error) {
-            //     });
-            // }
         },
 
         playCardAjaxSuccessful : function(result) {
-            console.log('successful ajax wop wop')
+            console.log('successful playcard ajax wop wop')
             console.log(result)
         },
 
         playCardAjaxFail : function(is_error) {
-            console.log('rip ajax jailed wop wop')
+            console.log('rip playcard ajax failed wop wop')
+            console.log(is_error)
+        },
+
+        flipCardAjaxSuccessful : function(result) {
+            console.log('successfulflipCard ajax wop wop')
+            console.log(result)
+        },
+
+        flipCardAjaxFail : function(is_error) {
+            console.log('ripflipCard ajax failed wop wop')
             console.log(is_error)
         },
 
@@ -454,50 +460,23 @@ function (dojo, declare) {
             if (!this.checkAction('playCard', true)) {
                 this.playerHand.unselectAll();
             }
-
-            // if (items.length == 1) {
-            //     var action = 'playCard';
-            //     if (this.checkAction(action, true)) {
-            //         // Can play a card
-            //         var card_id = items[0].id;                    
-            //         this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
-            //             id : card_id,
-            //             lock : true
-            //         }, this, function(result) {
-            //         }, function(is_error) {
-            //         });
-
-            //         this.playerHand.unselectAll();
-            //     } else {
-            //         this.playerHand.unselectAll();
-            //     }
-            // }
         },
-        // onPlayerHandSelectionChanged: function() {
-        //     // console.log('in hanging hands funciton');
-        //     let items = this.playerHand.getSelectedItems();
 
-        //     if (items.length > 0) {
-        //         if (this.checkAction('playCard', true)) {
-        //             // can play a card
-        //             let card_id = items[0].id;
-        //             console.log(("on playCard " + card_id));
-        //             var id = items[0].type;
-        //             let {color, number} = this.getCardFromUniqueId(id)
+        button_noFlip : function() {
+            let action = 'flipCard';
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                lock : true
+            }, this, this.flipCardAjaxSuccessful, this.flipCardAjaxFail);
 
-        //             debugger;
-        //             this.addCardToTheatre(color, color, number, this.player_id, card_id)
-        //             // addCardToTheatre: function (theatre, color, number, playerId) {
-                    
-        //             // this.playCardOnTable(color, color, number, player)
+        },
 
-        //         }
-        //         else {
-        //             console.log('wot')
-        //         }
-        //         this.playerHand.unselectAll();
-        //     }
-        // },
+        button_noMove : function() {
+            let action = 'moveCard';
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                lock : true
+            }, this, function() {}, function() {});
+
+        },
         
         /* Example:
         
@@ -551,25 +530,29 @@ function (dojo, declare) {
 
             dojo.subscribe('newHand', this, "notif_newHand");
             dojo.subscribe('playCard', this, "notif_playCard");
-            dojo.subscribe('newTheatreScore', this, "notif_newTheatreScore")
-
+            dojo.subscribe('newTheatreScore', this, "notif_newTheatreScore");
+            dojo.subscribe('recycledDeck', this, "notif_recycledDeck");
+            dojo.subscribe('theatreOrder', this, 'notif_theatreOrder')
+            dojo.subscribe('updateScore', this, 'notif_updateScore');
+            dojo.subscribe('flipCard', this, "notif_flipCard");
+            dojo.subscribe('destroyCard', this, 'notif_destroyCard');
         },
 
         notif_newHand : function(notif) {
             // We received a new full hand of 13 cards.
             this.playerHand.removeAll();
 
+            // debugger;
             for ( let i in notif.args.cards ) {
                 var card = notif.args.cards[i];
                 var color = card.type;
                 var value = card.type_arg;
-                this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
+                this.playerHand.addToStockWithId(this.getCardId(color, value), card.id);
             }
         },
 
         notif_playCard : function(notif) {
             // Play a card on the table
-            // this.playCardOnTable(notif.args.player_id, notif.args.color, notif.args.value, notif.args.card_id);
             theatre = this.rowToColor[notif.args.theatre]
             color = notif.args.color
             number = notif.args.value
@@ -581,7 +564,6 @@ function (dojo, declare) {
 
         notif_newTheatreScore : function(notif) {
             console.log('in newTheatreScore', notif)
-            // notif.args.scores.forEach(player_id => {})
             let scores = notif.args.scores;
 
             for (let player_id in scores) {
@@ -590,30 +572,51 @@ function (dojo, declare) {
                     this.counters[player_id][theatre].toValue(score)
                 }
             }
+        },
 
-            // for (let player_id in scores) {
-            //     for (let theatre in scores[player_id]) {
-            //         let score = scores[player_id][theatre]
-            //         $(`score_${theatre}_${player_id}`).value = score
-            //     }
-            // }
+        notif_recycledDeck : function(notif)  {
+            console.log("in recycled deck");
+            console.log(notif)
+            dojo.query(".theatre_cards_card").forEach(dojo.destroy);
+            for (let theatre in this.table) {
+                for (let player_id in this.table[theatre]) {
+                    this.table[theatre][player_id] = [];
+                }
+            }
+        },
+
+        notif_theatreOrder : function(notif) {
+            // debugger;
+            let new_order = notif.args.order;
+            let last = new_order[0];
+            // $(`theatre_${last}`).prependTo('#theatres');
+            let content = document.getElementById(`theatre_${last}`);
+            let parent = content.parentNode;
+            parent.insertBefore(content, parent.firstElementChild);
 
 
-            // scores.forEach(player_id => {
-            // for (let player_id in scores) {
-            //     scores[player_id].forEach(theatre => {
-            //         let score = scores[player_id][theatre]
-            //         $(`theatre_scores_${theatre}_${player_id}`).value = score
-            //     })
-            // }
-            // for (let i in scores) {
-            //     player_id = scores[i]
-            //     for (let j in scores[i][player_id]) {
-            //         let theatre = scores[i][player_id][j]
-            //         $(`theatre_scores_${theatre}_${player_id}`).value = 
-            //     }
-            // }
-        }
+        },
+
+        notif_updateScore : function(notif) {
+            let winner = notif.args.winner;
+            let current = this.scoreCtrl[winner].current_value;
+            this.scoreCtrl[winner].toValue(current + 6);
+        },
+
+        notif_flipCard : function(notif) {
+            console.log('in notif_flipCard', notif)
+            let area = document.getElementById(`theatre_cards_${notif.args.theatre}_${notif.args.player_id}`);
+            let target = area.children[area.children.length - 1];
+            let {x, y} = notif.args
+            target.style.backgroundPosition = `${x}% ${y}%`
+        },
+
+        notif_destroyCard : function(notif) {
+            let area = document.getElementById(`theatre_cards_${notif.args.theatre}_${notif.args.player_id}`);
+            let target = area.children[area.children.length - 1];
+            target.remove();
+            // document.removeChild()
+        },
         
         
         // TODO: from this point and below, you can write your game notifications handling methods

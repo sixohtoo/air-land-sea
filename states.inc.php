@@ -45,17 +45,11 @@ method).
 
 //    !! It is not a good idea to modify this file when a game is running !!
 
+
+
+
 /*
-# Functions mentioned here yikes
-* stGameSetup
-* stNewHand     0 
-* argPlayerTurn
-* playCard
-* stNextPlayer  0
-* stRoundEnd
-* stGameEnd
-* argGameEnd
-*/
+ */
 
 
 
@@ -91,15 +85,37 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must play a card'),
         "type" => "activeplayer",
         "possibleactions" => array('playCard'),
-        "transitions" => array("playCard" => 11, "forfeit" => 98)
+        "transitions" => array("playCard" => 50, "forfeit" => 98)
     ),
+
+    // flip a card
+    20 => array(
+        "name" => "flipCard",
+        "description" => clienttranslate('${actplayer} can flip a card'),
+        "descriptionmyturn" => clienttranslate('${you} can flip a card'),
+        "type" => "activeplayer",
+        "possibleactions" => array("flipCard"),
+        "transitions" => array("flipCard" => 50),
+        "args" => "argFlipCard"
+    ),
+
+    21 => array(
+        "name" => "moveCard",
+        "description" => clienttranslate('${actplayer} can move a card'),
+        "descriptionmyturn" => clienttranslate('${you} can move a card'),
+        "type" => "activeplayer",
+        "possibleactions" => array(""),
+        "transitions" => array("" => 50),
+    ),
+
     // go to next player
-    11 => array(
+    50 => array(
         "name" => "nextPlayer",
         "type" => "game",
         "action" => "stNextPlayer",
-        "transitions" => array("nextTurn" => 10, "endRound" => 98)
+        "transitions" => array("playCard" => 10, "flipCard" => 20, "endRound" => 98)
     ),
+
     98 => array(
         "name" => "roundEnd",
         "description" => clienttranslate("End of round"),

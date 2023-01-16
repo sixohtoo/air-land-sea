@@ -144,3 +144,8 @@
 .stacked {
     margin-bottom: -75%;
 }
+
+.clickable {
+    border: 2px solid red;
+    cursor: pointer;
+}
