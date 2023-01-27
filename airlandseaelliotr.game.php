@@ -283,7 +283,12 @@ class airlandseaelliotr extends Table
         $query = sprintf("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, face_up, position FROM card WHERE (LOWER(card_location) LIKE LOWER('%s')) %s ORDER BY position", $location, $extra);
         // $query = sprintf("SELECT card_id id, card_type type, card_type_arg type_arg, card_location location, card_location_arg location_arg, face_up, position FROM card WHERE (LOWER(card_location) LIKE LOWER('%s')) AND (card_location_arg = %d) ORDER BY position", $location, $location_arg);
         $x = self::getCollectionFromDB($query);
-        return $x;
+        $y = array();
+        // $i = 0;
+        foreach ($x as $id => $card) {
+            $y[] = $card;
+        }
+        return $y;
     }
 
     public function getCard($card_id)
@@ -382,23 +387,73 @@ class airlandseaelliotr extends Table
         return self::getObjectFromDB("SELECT card_id id, card_location location, card_location_arg location_arg, face_up, card_type type, card_type_arg type_arg FROM card WHERE recent = 1");
     }
 
+    public function removeRecentCard()
+    {
+        $sql = "UPDATE card SET recent = 0";
+        self::DbQuery($sql);
+        // return self::getObjectFromDB("SELECT card_id id, card_location location, card_location_arg location_arg, face_up, card_type type, card_type_arg type_arg FROM card WHERE recent = 1");
+    }
+
     public function getNextState()
     {
+
         $card = self::getRecentCard();
         // $sql = "SELECT card_type type, card_type_arg type_arg, card_location_arg location_arg, face_up FROM card WHERE recent = 1";
         // $card = self::getObjectFromDB($sql);
+        // if ($card === null) {
+        //     self::error('recent card has been deleted');
+        //     $state = 'playCard';
+        // } else {}
 
+        // steps
+        // if no action: playCard + next player
+        // if not in array: playCard + next player
+        // else: weird stuff
+
+        $card = self::getRecentCard();
         $state = $card['face_up'] ? $this->card_to_state[$this->theatre_name[$card['type']] . $card['type_arg']] : 'playCard';
-        if (array_search($state, $this->strange_order_states) !== false && $card['face_up']) {
-            $new_active_player = $card['location_arg'];
-            self::error("doing weird stuff");
-        } else {
+        $weird_state = array_search($state, $this->strange_order_states);
+        $no_action = self::checkPlayerNoAction();
+
+        if ($no_action || $weird_state === false) {
+            self::changeRecentPlayer();
             $new_active_player = self::getUniqueValueFromDB("SELECT player_id FROM player where next_player = 1");
-            self::error("doing normal stuff!");
+            self::removePlayerNoAction();
+            $state = 'playCard';
+            // $this->gamestate->activeNextPlayer();
+            // return $state;
+        } else {
+            $new_active_player = $card['location_arg'];
         }
-        self::error(sprintf("new active player: %d && new state: %s", $new_active_player, $state));
         $this->gamestate->changeActivePlayer($new_active_player);
         return $state;
+        // if ($no_action === null || )
+
+
+        // self::error(print_r(self::getNextPlayerTable(), true));
+        // self::error(sprintf("before active player is %s", self::getActivePlayerId()));
+        // if (self::checkPlayerNoAction() !== null) {
+        //     $state = $card['face_up'] ? $this->card_to_state[$this->theatre_name[$card['type']] . $card['type_arg']] : 'playCard';
+        // } else {
+        //     self::updatePlayerNoAction();
+        //     self::changeRecentPlayer();
+        //     $this->gamestate->changeActivePlayer($new_active_player);
+        //     $state = 'playCard';
+        // }
+        // // }
+        // // if (array_search()
+        // if (array_search($state, $this->strange_order_states) !== false && $card['face_up']) {
+        //     $new_active_player = $card['location_arg'];
+        //     self::error("doing weird stuff");
+        // } else {
+        //     self::changeRecentPlayer();
+        //     $new_active_player = self::getUniqueValueFromDB("SELECT player_id FROM player where next_player = 1");
+        //     self::error("doing normal stuff!");
+        // }
+        // self::error(sprintf("new active player: %d && new state: %s", $new_active_player, $state));
+        // $this->gamestate->changeActivePlayer($new_active_player);
+        // self::error(sprintf("after active player is %s", self::getActivePlayerId()));
+        // return $state;
     }
 
     public function changeRecentPlayer()
@@ -411,6 +466,25 @@ class airlandseaelliotr extends Table
     {
         $sql = "SELECT player_id FROM player where next_player = 0";
         return self::getUniqueValueFromDB($sql);
+    }
+
+    public function checkPlayerNoAction()
+    {
+        $sql = "SELECT 1 FROM player WHERE chose_no_action = 1";
+        return self::getUniqueValueFromDb($sql);
+    }
+    public function updatePlayerNoAction()
+    {
+        $id = self::getActivePlayerId();
+        $sql = sprintf("UPDATE player SET chose_no_action = !chose_no_action WHERE player_id = %s", $id);
+        self::DbQuery($sql);
+    }
+
+    public function removePlayerNoAction()
+    {
+        $id = self::getActivePlayerId();
+        $sql = sprintf("UPDATE player SET chose_no_action = 0 WHERE player_id = %s", $id);
+        self::DbQuery($sql);
     }
 
     public function checkCardPlayed($type, $num)
@@ -548,9 +622,9 @@ class airlandseaelliotr extends Table
                 'card_id' => $card_id,
                 'player_id' => $player_id,
                 'player_name' => self::getActivePlayerName(),
-                'value' => $currentCard['type_arg'],
+                'value' => $faceUp ? $currentCard['type_arg'] : 2,
                 'value_displayed' => $this->values_label[$currentCard['type_arg']],
-                'color' => $currentCard['type'],
+                'color' => $faceUp ? $currentCard['type'] : 'flipped',
                 'color_displayed' => $this->theatres[$currentCard['type']]['name'],
                 'theatre' => $target_theatre,
                 'faceUp' => $faceUp,
@@ -569,7 +643,7 @@ class airlandseaelliotr extends Table
         // Next player
         self::error(sprintf("theatre: %s, number: %s", $theatre, $currentCard['type_arg']));
 
-        self::changeRecentPlayer();
+        // self::changeRecentPlayer();
 
         self::error("finishing play card");
         $this->gamestate->nextState("playCard");
@@ -652,6 +726,7 @@ class airlandseaelliotr extends Table
         // $next_state = !$targetCard['face_up'] ? $this->card_to_state[$this->theatre_name[$targetCard['type']] . $targetCard['type_arg']] : 'playCard';
 
 
+        // self::updatePlayerNoAction();
         // $this->gamestate->nextState($next_state);
         $this->gamestate->nextState("flipCard");
 
@@ -761,6 +836,7 @@ class airlandseaelliotr extends Table
     function stNextPlayer()
     {
 
+        // TODO: movecard / flip card should happen before end of game check
         // make next player active OR end round
         $players_ids = self::get_player_ids();
         // $cards_played = count($this->cards->getCardsInLocation('hand', $players_ids[0]));
@@ -770,7 +846,7 @@ class airlandseaelliotr extends Table
         }
 
         // Potentially destroy card before ending round.
-        self::checkDestroy();
+        // self::checkDestroy();
 
         // All dealt cards have been played -> end round
         if ($cards_remaining == 0) {
@@ -778,11 +854,12 @@ class airlandseaelliotr extends Table
             $this->gamestate->nextState("endRound");
         } else {
             // else next player's turn to place a card.
-            self::activeNextPlayer();
+            // self::activeNextPlayer();
             $player_id = self::getActivePlayerId();
             self::giveExtraTime($player_id);
             self::error("boutta change state");
             $next_state = self::getNextState();
+            self::error(sprintf("changing to %s", $next_state));
             $this->gamestate->nextState($next_state);
         }
 
@@ -844,7 +921,7 @@ class airlandseaelliotr extends Table
     }
 
     // TODO: Move function to more relevant place (no longer a state action)
-    function checkDestroy()
+    function stDestroyCard()
     {
         $card = self::getRecentCard();
         $theatre_index = array_search($card['location'], self::get_theatre_order());
@@ -899,35 +976,50 @@ class airlandseaelliotr extends Table
 
             self::updateRoundScore(self::calculateRoundScore());
         }
+        $this->gamestate->nextState("");
     }
 
-    function stMoveCard($src_theatre, $dest_theatre, $index)
+    // TODO: move function to relevcant place
+    function moveCard($src_theatre, $dest_theatre, $index)
     {
+        // TODO: add logic for not moving
+        if ($src_theatre === $dest_theatre) {
+            throw new BgaUserException("You can't move a card to the same theatre!");
+        }
+        self::error(sprintf("started moveCard. args are src_theatre: %s, dest_theatre: %s, index: %s", $src_theatre, $dest_theatre, $index));
         $player_id = self::getActivePlayerId();
         $cards = self::getCardsInLocation($src_theatre, $player_id);
+        self::error(print_r($cards, true));
         $card = $cards[$index];
         $position = $this->cards->countCardsInLocation($dest_theatre, $player_id) + 1;
+        self::error(sprintf("moving the %s %s to %s", $card['type_arg'], $card['type'], $dest_theatre));
         $this->cards->moveCard($card['id'], $dest_theatre, $player_id);
         self::dBSetPosition($card['id'], $position);
+
+        self::error(sprintf("value displayed is %s", $card['face_up'] ? $this->values_label[$card['type_arg']] : 'a flipped card', ));
+
         self::notifyAllPlayers(
             'moveCard',
-            clienttranslate('${player_name} moves ${value_displayed} ${color_displayed} from ${src_theatre} to {dest_theatre}'),
+            clienttranslate('${active_name} moves ${value_displayed} ${color_displayed} from ${src_theatre} to ${dest_theatre}'),
             array(
                 'i18n' => array('color_displayed', 'value_displayed'),
                 'active_name' => self::getActivePlayerName(),
-                'value_displayed' => $this->values_label[$card['type_arg']],
-                'color' => $card['type'],
-                'color_displayed' => $this->theatres[$card['type']]['name'],
+                'value_displayed' => $card['face_up'] ? $this->values_label[$card['type_arg']] : 'a flipped card',
+                'color' => $card['face_up'] ? $card['type'] : 0,
+                'color_displayed' => $card['face_up'] ? $this->theatres[$card['type']]['name'] : '',
                 'player_id' => self::getActivePlayerId(),
                 'theatre' => $card['location'],
                 'src_theatre' => $src_theatre,
                 'dest_theatre' => $dest_theatre,
-                'index' => $index
+                'index' => $index,
+                'face_up' => $card['face_up'],
+                'card_id' => $card['id']
             )
         );
 
         self::notifyScore();
 
+        self::updatePlayerNoAction();
         $this->gamestate->nextState("");
 
 

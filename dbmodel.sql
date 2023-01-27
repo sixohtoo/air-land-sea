@@ -42,6 +42,7 @@ ALTER TABLE `player` ADD `Air` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Land` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `Sea` int(3) DEFAULT '0';
 ALTER TABLE `player` ADD `next_player` int(3) DEFAULT '0';
+ALTER TABLE `player` ADD `chose_no_action` int(3) DEFAULT '0';
 
 
 

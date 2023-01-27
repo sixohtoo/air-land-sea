@@ -95,26 +95,36 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} can flip a card'),
         "type" => "activeplayer",
         "possibleactions" => array("flipCard"),
-        "transitions" => array("flipCard" => 50),
+        "transitions" => array("flipCard" => 51),
         "args" => "argFlipCard"
     ),
 
     21 => array(
         "name" => "moveCard",
         "description" => clienttranslate('${actplayer} can move a card'),
-        "descriptionmyturn" => clienttranslate('${you} can move a card'),
+        "descriptionmyturn" => clienttranslate('${you} can select a card and a theatre'),
         "type" => "activeplayer",
         "possibleactions" => array(""),
-        "transitions" => array("" => 50),
+        "transitions" => array("" => 51),
+    ),
+
+    // TODO: flipping card shouldn't destroy
+    // check if have to destroy a card
+    50 => array(
+        "name" => "destroyCard",
+        "type" => "game",
+        "action" => "stDestroyCard",
+        "transitions" => array("" => 51)
     ),
 
     // go to next player
-    50 => array(
+    51 => array(
         "name" => "nextPlayer",
         "type" => "game",
         "action" => "stNextPlayer",
-        "transitions" => array("playCard" => 10, "flipCard" => 20, "endRound" => 98)
+        "transitions" => array("playCard" => 10, "flipCard" => 20, "endRound" => 98, "moveCard" => 21)
     ),
+
 
     98 => array(
         "name" => "roundEnd",

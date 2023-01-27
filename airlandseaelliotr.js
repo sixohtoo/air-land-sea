@@ -193,16 +193,54 @@ function (dojo, declare) {
                         area = document.getElementById(`theatre_cards_${theatre}_${player}`)
                         children = area.children;
                         if (children.length) {
-                            console.log('area is', area);
-                            console.log('child is', children)
                             last = children[children.length - 1]
                             last.onclick = (e) => this.flipCard(e)
                             last.classList.add('clickable')
+                            last.classList.add('flip')
                         }
 
                     })
                 })
                 break;
+            case 'moveCard':
+                console.log('this is the args', args);
+                this.theatres.forEach(src_theatre => {
+                    // theatre = document.getElementById(`theatre_${theatre}`);
+                    id = this.getActivePlayerId()
+                    cards = document.getElementById(`theatre_cards_${src_theatre}_${id}`).childNodes
+                    for (let i = 0; i < cards.length; i++) {
+                        card = cards[i];
+                        card.classList.add('clickable')
+                        card.classList.add('move')
+                        card.onclick = (e) => {
+                            console.log('clicked on da card')
+                            this.theatres.forEach(dest_theatre => {
+                                $(`theatre_picture_${dest_theatre}`).onclick = (e) => {
+                                    console.log('clicked on theatre in moveCard')
+                                    this.moveCard(src_theatre, dest_theatre, i)
+                                }
+                            });
+                        };
+                    }
+                    // cards = lis
+                })
+                // list = document.getElementsByClassName('theatre_cards_card');
+                // for (let i = 0; i < list.length; i++) {
+                //     debugger;
+                //     let elem = list[i];
+                //     elem.classList.add('clickable')
+                //     elem.classList.add('move')
+                //     let elem_theatre = elem.parentNode.id.split('_')[2]
+                //     elem.onclick = (e) => {
+                //         this.theatres.forEach(theatre => {
+                //             $(`theatre_picture_${theatre}`).onclick = (e) => this.moveCard(elem_theatre, theatre, i)
+                //         });
+                //     };
+                // }
+                // document.getElementsByClassName('theatre_cards_card').forEach(elem => {
+                //     elem.classList.add('clickable')
+                //     elem.onclick = (e) => this.moveCard(e)
+                // })
             
             case 'dummmy':
                 break;
@@ -241,13 +279,18 @@ function (dojo, declare) {
                 for (let i = 0; i < clickables.length; i++) {
                     let elem = clickables[i];
                     elem.classList.remove('clickable')
+                    elem.classList.remove('flip')
                     elem.onclick = () => {}
                 }
-                // debugger;
-                // document.getElementsByClassName('clickable').forEach(elem => {
-                //     elem.classList.remove('clickable')
-                //     elem.onclick = () => {}
-                // })
+                break;
+            case 'moveCard':
+                let cards = document.getElementsByClassName('clickable');
+                for (let i = 0; i < cards.length; i++) {
+                    let elem = cards[i];
+                    elem.classList.remove('clickable')
+                    elem.classList.remove('move')
+                    elem.onclick = () => {}
+                }
                 break;
             case 'dummmy':
                 break;
@@ -323,6 +366,8 @@ function (dojo, declare) {
 
 
         addCardToTheatre: function (theatre, color, number, playerId, divid, faceUp, fromHand) {
+
+            console.log(theatre, color, number, playerId, divid, faceUp, fromHand);
             const cards = this.table[theatre][playerId];
             // debugger;
             for (let i in cards) {
@@ -407,12 +452,10 @@ function (dojo, declare) {
         flipCard : function(target) {
             console.log(target)
             let action = 'flipCard'
-            let parent = target.target.parentNode;
+            let parent = target.target.parentNode; // target.target.parentNode.id.split('_')[2]
             let parent_id = parent.id.split('_');
             let theatre = parent_id[2];
             let player_id = parent_id[3];
-            debugger;
-            // card_id = target.target.
             this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
                 theatre: this.colorToRow[theatre],
                 player_id,
@@ -420,6 +463,24 @@ function (dojo, declare) {
             }, this, this.flipCardAjaxSuccessful, this.flipCardAjaxFail);
             
         },
+
+        moveCard : function(src_theatre, dest_theatre, position) {
+            // return
+            debugger;
+            // console.log("move card target", target)
+            // let parent = target.target.parentNode;
+            // let parent_id = parent.id.split('_');
+            // let theatre = parent_id[2];
+            // let player_id = parent_id[3];
+            action = 'moveCard'
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                src_theatre,
+                dest_theatre,
+                position,
+                lock : true
+            }, this, this.moveCardAjaxSuccessful, this.moveCardAjaxFail);
+        },
+
         // TODO: bug! have to already have selected a card. will fix later
         onClickTheatre : function(event) {
             let theatre = event.target.id.split('_')[2]
@@ -452,6 +513,16 @@ function (dojo, declare) {
 
         flipCardAjaxFail : function(is_error) {
             console.log('ripflipCard ajax failed wop wop')
+            console.log(is_error)
+        },
+
+        moveCardAjaxSuccessful : function(result) {
+            console.log('successful moveCard ajax wop wop')
+            console.log(result)
+        },
+
+        moveCardAjaxFail : function(is_error) {
+            console.log('rip moveCard ajax failed wop wop')
             console.log(is_error)
         },
 
@@ -536,6 +607,7 @@ function (dojo, declare) {
             dojo.subscribe('updateScore', this, 'notif_updateScore');
             dojo.subscribe('flipCard', this, "notif_flipCard");
             dojo.subscribe('destroyCard', this, 'notif_destroyCard');
+            dojo.subscribe('moveCard', this, 'notif_moveCard');
         },
 
         notif_newHand : function(notif) {
@@ -616,6 +688,21 @@ function (dojo, declare) {
             let target = area.children[area.children.length - 1];
             target.remove();
             // document.removeChild()
+        },
+
+        notif_moveCard : function(notif) {
+            console.log('moving card', notif.args);
+            let area = document.getElementById(`theatre_cards_${notif.args.src_theatre}_${notif.args.player_id}`);
+            let card = area.childNodes[notif.args.index];
+            card.remove()
+
+            let {dest_theatre, color, value_displayed, player_id, card_id, face_up} = notif.args
+            // dest_theatre = notif.args.dest_theatre
+            // color = notif.args.color
+            // value_displayed = notif.args.value_displayed
+            // player_id = notif.args.player_id
+            // card_id = notif.args.card_id
+            this.addCardToTheatre(dest_theatre, color, value_displayed, player_id, card_id, face_up, false)
         },
         
         

@@ -64,27 +64,21 @@ $this->card_to_state = array(
     'Air3' => 'flipCard',
     'Air4' => 'playCard',
     'Air5' => 'playCard',
-    'Air6' => 'playCard',
+    'Air6' => 'moveCard',
 
-    # drawCard
     'Land1' => 'playCard',
     'Land2' => 'flipCard',
     'Land3' => 'flipCard',
     'Land4' => 'playCard',
-    # flipCard
     'Land5' => 'playCard',
-    'Land6' => 'playCard',
+    'Land6' => 'moveCard',
 
-    # moveCard
-    'Sea1' => 'playCard',
+    'Sea1' => 'moveCard',
     'Sea2' => 'playCard',
     'Sea3' => 'flipCard',
-    # 2ndTurn
-    // 'Sea4' => 'flipCard',
     'Sea4' => 'playCard',
     'Sea5' => 'playCard',
-    // 'Sea5' => 'playCard',
-    'Sea6' => 'playCard',
+    'Sea6' => 'moveCard',
 );
 
 $this->score_card = array(
@@ -113,5 +107,10 @@ $this->score_card = array(
 
 
 $this->strange_order_states = array(
-    'flipCard'
+    'flipCard',
+    'moveCard'
+);
+
+$this->one_off_states = array(
+    'moveCard'
 );

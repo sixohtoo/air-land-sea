@@ -26,12 +26,14 @@
 
 ## stuff left
 * Air 2 (next card to non matching)             !!
-* Air 4 (3 or less anywhere)                    !
 * Land 1 (Draw and play facedown)               !!!
 * Land 5 (you flip, then opponent flips)        !!
 * Sea 1 (move card anywhere)                    !
 * Sea 4 (pick ujp facedown and play another)    !!
 * 
+
+## TODO
+* flipping opponents card doesnt cause animation (gotta refresh)
 
 ## stuff to code
 * move cards (1) -> choose card + theatre
