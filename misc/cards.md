@@ -28,7 +28,6 @@
 * Air 2 (next card to non matching)             !!
 * Land 1 (Draw and play facedown)               !!!
 * Land 5 (you flip, then opponent flips)        !!
-* Sea 1 (move card anywhere)                    !
 * Sea 4 (pick ujp facedown and play another)    !!
 * 
 

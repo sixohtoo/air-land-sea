@@ -64,21 +64,21 @@ $this->card_to_state = array(
     'Air3' => 'flipCard',
     'Air4' => 'playCard',
     'Air5' => 'playCard',
-    'Air6' => 'moveCard',
+    'Air6' => 'playCard',
 
     'Land1' => 'playCard',
     'Land2' => 'flipCard',
     'Land3' => 'flipCard',
     'Land4' => 'playCard',
     'Land5' => 'playCard',
-    'Land6' => 'moveCard',
+    'Land6' => 'playCard',
 
     'Sea1' => 'moveCard',
     'Sea2' => 'playCard',
     'Sea3' => 'flipCard',
     'Sea4' => 'playCard',
     'Sea5' => 'playCard',
-    'Sea6' => 'moveCard',
+    'Sea6' => 'playCard',
 );
 
 $this->score_card = array(

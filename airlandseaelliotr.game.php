@@ -267,7 +267,14 @@ class airlandseaelliotr extends Table
     public function checkValidTheatre($card, $theatre, $face_up)
     {
         // $type = $this->theatre_row[$card[]];
+        $sql = sprintf("SELECT player_id FROM player WHERE play_anywhere = 1 AND player_id LIKE '%s'", self::getActivePlayerId());
+        $air2 = self::getUniqueValueFromDB($sql);
+        self::error(sprintf("air 2 is %s", $air2));
         if (!$face_up) {
+            return true;
+        } else if ($air2) {
+            $sql = sprintf("UPDATE player SET play_anywhere = 0");
+            self::DbQuery($sql);
             return true;
         } else if ($card['type_arg'] <= 3 && self::checkPlayerPlayedCard('Air', 4, self::getActivePlayerId())) {
             return true;
@@ -275,6 +282,7 @@ class airlandseaelliotr extends Table
             return $card['type'] === $theatre;
         }
     }
+
 
     // TODO: remove sqli issues
     public function getCardsInLocation($location, ...$location_arg)
@@ -598,6 +606,10 @@ class airlandseaelliotr extends Table
         $theatre = $currentCard['type'];
         if (!self::checkValidTheatre($currentCard, $target_theatre, $faceUp)) {
             throw new BgaUserException("That card can't go there!");
+        }
+
+        if ($currentCard['type'] == 1 && $currentCard['type_arg'] == 2) {
+            self::DbQuery(sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %d", self::getActivePlayerId()));
         }
         // if ($faceUp && $target_theatre !== $theatre) {
         //     throw new BgaUserException("That card can't go there!");
@@ -1066,7 +1078,15 @@ class airlandseaelliotr extends Table
             'players' => $players,
             'theatres' => $theatres
         );
+    }
 
+    function stPlayAnywhere()
+    {
+        self::error("setting play anywhere!");
+        $id = self::getActivePlayerId();
+        $sql = sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %s", $id);
+        self::DbQuery($sql);
+        $this->gamestate->nextState("");
     }
 
 
