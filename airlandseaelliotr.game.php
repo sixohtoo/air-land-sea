@@ -608,9 +608,9 @@ class airlandseaelliotr extends Table
             throw new BgaUserException("That card can't go there!");
         }
 
-        if ($currentCard['type'] == 1 && $currentCard['type_arg'] == 2) {
-            self::DbQuery(sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %d", self::getActivePlayerId()));
-        }
+        // if ($currentCard['type'] == 1 && $currentCard['type_arg'] == 2) {
+        //     self::DbQuery(sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %d", self::getActivePlayerId()));
+        // }
         // if ($faceUp && $target_theatre !== $theatre) {
         //     throw new BgaUserException("That card can't go there!");
         // }
@@ -720,8 +720,8 @@ class airlandseaelliotr extends Table
                 'faceUp' => $targetCard['face_up'],
                 'player_id' => $target_player,
                 'theatre' => $theatre,
-                'y' => $targetCard['face_up'] ? (int) $theatre * 33.3 : 0,
-                'x' => $targetCard['face_up'] ? ($targetCard['type'] - 1) * 20 : 0
+                'y' => $targetCard['face_up'] ? (int) $target_theatre * 33.3 : 0,
+                'x' => $targetCard['face_up'] ? ($targetCard['type_arg'] - 1) * 20 : 0
             )
         );
 
@@ -1082,10 +1082,13 @@ class airlandseaelliotr extends Table
 
     function stPlayAnywhere()
     {
+        $card = self::getRecentCard();
         self::error("setting play anywhere!");
-        $id = self::getActivePlayerId();
-        $sql = sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %s", $id);
-        self::DbQuery($sql);
+        // $id = self::getActivePlayerId();
+        if ($card['type'] == 1 && $card['type_arg'] == 2 && $card['face_up']) {
+            $sql = sprintf("UPDATE player SET play_anywhere = 1 WHERE player_id = %s", $card['location_arg']);
+            self::DbQuery($sql);
+        }
         $this->gamestate->nextState("");
     }
 

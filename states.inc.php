@@ -109,13 +109,6 @@ $machinestates = array(
     ),
 
 
-    // // Triggered if air2 is played faceup
-    // 49 => array(
-    //     "name" => "playAnyhwere",
-    //     "type" => "game",
-    //     "action" => "stPlayAnywhere",
-    //     "transitions" => array("" => 50)
-    // ),
 
     // TODO: flipping card shouldn't destroy
     // check if have to destroy a card
@@ -125,9 +118,16 @@ $machinestates = array(
         "action" => "stDestroyCard",
         "transitions" => array("" => 51)
     ),
+    // // Triggered if air2 is played faceup
+    51 => array(
+        "name" => "checkPlayAnyhwere",
+        "type" => "game",
+        "action" => "stPlayAnywhere",
+        "transitions" => array("" => 52)
+    ),
 
     // go to next player
-    51 => array(
+    52 => array(
         "name" => "nextPlayer",
         "type" => "game",
         "action" => "stNextPlayer",

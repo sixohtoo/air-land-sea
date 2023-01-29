@@ -677,6 +677,7 @@ function (dojo, declare) {
 
         notif_flipCard : function(notif) {
             console.log('in notif_flipCard', notif)
+            debugger;
             let area = document.getElementById(`theatre_cards_${notif.args.theatre}_${notif.args.player_id}`);
             let target = area.children[area.children.length - 1];
             let {x, y} = notif.args
