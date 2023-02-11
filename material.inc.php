@@ -20,6 +20,10 @@
  */
 
 $this->theatres = array(
+    0 => array(
+        'name' => clienttranslate('Face down'),
+        'nametr' => self::_('Face Down')
+    ),
     1 => array(
         'name' => clienttranslate('Air'),
         'nametr' => self::_('Air')
@@ -35,12 +39,14 @@ $this->theatres = array(
 );
 
 $this->theatre_name = array(
+    0 => "Face down",
     1 => "Air",
     2 => "Land",
     3 => "Sea"
 );
 
 $this->theatre_row = array(
+    "Face down" => 0,
     "Air" => 1,
     "Land" => 2,
     "Sea" => 3
@@ -66,7 +72,7 @@ $this->card_to_state = array(
     'Air5' => 'playCard',
     'Air6' => 'playCard',
 
-    'Land1' => 'playCard',
+    'Land1' => 'drawCard',
     'Land2' => 'flipCard',
     'Land3' => 'flipCard',
     'Land4' => 'playCard',
@@ -108,7 +114,8 @@ $this->score_card = array(
 
 $this->strange_order_states = array(
     'flipCard',
-    'moveCard'
+    'moveCard',
+    'drawCard',
 );
 
 $this->one_off_states = array(

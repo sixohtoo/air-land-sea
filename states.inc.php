@@ -109,6 +109,24 @@ $machinestates = array(
     ),
 
 
+    22 => array(
+        "name" => "playFaceDown",
+        "description" => clienttranslate('${actplayer} must play the card facedown'),
+        "descriptionmyturn" => clienttranslate('${you} must play the card facedown'),
+        "type" => "activeplayer",
+        "possibleactions" => array(""),
+        "transitions" => array("" => 50),
+        "args" => "argPlayFaceDown",
+    ),
+
+
+
+    30 => array(
+        "name" => "drawCard",
+        "type" => "game",
+        "action" => "stDrawCard",
+        "transitions" => array("" => 22)
+    ),
 
     // TODO: flipping card shouldn't destroy
     // check if have to destroy a card
@@ -131,7 +149,13 @@ $machinestates = array(
         "name" => "nextPlayer",
         "type" => "game",
         "action" => "stNextPlayer",
-        "transitions" => array("playCard" => 10, "flipCard" => 20, "endRound" => 98, "moveCard" => 21)
+        "transitions" => array(
+            "playCard" => 10,
+            "flipCard" => 20,
+            "endRound" => 98,
+            "moveCard" => 21,
+            "drawCard" => 30
+        )
     ),
 
 

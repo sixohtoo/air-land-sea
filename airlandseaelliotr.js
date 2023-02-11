@@ -222,26 +222,30 @@ function (dojo, declare) {
                             });
                         };
                     }
-                    // cards = lis
                 })
-                // list = document.getElementsByClassName('theatre_cards_card');
-                // for (let i = 0; i < list.length; i++) {
-                //     debugger;
-                //     let elem = list[i];
-                //     elem.classList.add('clickable')
-                //     elem.classList.add('move')
-                //     let elem_theatre = elem.parentNode.id.split('_')[2]
-                //     elem.onclick = (e) => {
-                //         this.theatres.forEach(theatre => {
-                //             $(`theatre_picture_${theatre}`).onclick = (e) => this.moveCard(elem_theatre, theatre, i)
-                //         });
-                //     };
-                // }
-                // document.getElementsByClassName('theatre_cards_card').forEach(elem => {
-                //     elem.classList.add('clickable')
-                //     elem.onclick = (e) => this.moveCard(e)
-                // })
-            
+                break;
+            case 'playFaceDown':
+                console.log("facedown args is", args);
+                this.playerHand.setSelectionMode(0)
+                // make theatres red
+                let id = args.args.id
+                // TODO: Can other player see what card is being played?
+                // TODO: does it matter if they can see id? Will be played the same turn...
+                let card = document.getElementById(`myhand_item_${id}`) 
+                if (card) {
+                    card.classList.add('selected');
+                    args.args.theatres.forEach(theatre => {
+                        let picture = document.getElementById(`theatre_picture_${theatre}`)
+                        picture.classList.add('clickable')
+                        picture.classList.add('playFaceDown')
+                        picture.onclick = (e) => {
+                            console.log('clicked on a theatre')
+                            this.playFaceDown(theatre)
+                        }
+                    })
+                }
+                // this.addActionButton
+                break;
             case 'dummmy':
                 break;
             }
@@ -292,6 +296,19 @@ function (dojo, declare) {
                     elem.onclick = () => {}
                 }
                 break;
+            case 'playFaceDown':
+                let theatres = document.getElementsByClassName('clickable');
+                for (let i = 0; i < theatres.length; i++) {
+                    let elem = theatres[i];
+                    elem.classList.remove('clickable')
+                    elem.classList.remove('playFaceDown')
+                    elem.onclick = () => {}
+                }
+                // let card = document.getElementsByClassName('selected')[0]
+                // card.classList.remove('selected')
+                this.playerHand.setSelectionMode(1)
+                break;
+
             case 'dummmy':
                 break;
             }               
@@ -366,7 +383,7 @@ function (dojo, declare) {
 
 
         addCardToTheatre: function (theatre, color, number, playerId, divid, faceUp, fromHand) {
-
+            debugger;
             console.log(theatre, color, number, playerId, divid, faceUp, fromHand);
             const cards = this.table[theatre][playerId];
             // debugger;
@@ -481,6 +498,15 @@ function (dojo, declare) {
             }, this, this.moveCardAjaxSuccessful, this.moveCardAjaxFail);
         },
 
+        playFaceDown : function(dest_theatre) {
+            console.log("hello we in here");
+            action = 'playFaceDown'
+            this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", {
+                dest_theatre,
+                lock : true
+            }, this, this.playFaceDownAjaxSuccessful, this.playFaceDownAjaxFail);
+        },
+
         // TODO: bug! have to already have selected a card. will fix later
         onClickTheatre : function(event) {
             let theatre = event.target.id.split('_')[2]
@@ -523,6 +549,16 @@ function (dojo, declare) {
 
         moveCardAjaxFail : function(is_error) {
             console.log('rip moveCard ajax failed wop wop')
+            console.log(is_error)
+        },
+
+        playFaceDownAjaxSuccessful : function(result) {
+            console.log('successful playFaceDown ajax wop wop')
+            console.log(result)
+        },
+
+        playFaceDownAjaxFail : function(is_error) {
+            console.log('rip playFaceDown ajax failed wop wop')
             console.log(is_error)
         },
 
@@ -608,6 +644,8 @@ function (dojo, declare) {
             dojo.subscribe('flipCard', this, "notif_flipCard");
             dojo.subscribe('destroyCard', this, 'notif_destroyCard');
             dojo.subscribe('moveCard', this, 'notif_moveCard');
+            dojo.subscribe('drawCard', this, 'notif_drawCard');
+
         },
 
         notif_newHand : function(notif) {
@@ -698,14 +736,16 @@ function (dojo, declare) {
             card.remove()
 
             let {dest_theatre, color, value_displayed, player_id, card_id, face_up} = notif.args
-            // dest_theatre = notif.args.dest_theatre
-            // color = notif.args.color
-            // value_displayed = notif.args.value_displayed
-            // player_id = notif.args.player_id
-            // card_id = notif.args.card_id
             this.addCardToTheatre(dest_theatre, color, value_displayed, player_id, card_id, face_up, false)
         },
         
+        notif_drawCard : function(notif) {
+            console.log('drawing card', notif.args)
+            let card = notif.args.card
+            var color = card.type;
+            var value = card.type_arg;
+            this.playerHand.addToStockWithId(this.getCardId(color, value), card.id);
+        }
         
         // TODO: from this point and below, you can write your game notifications handling methods
         

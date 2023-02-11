@@ -89,6 +89,22 @@ class action_airlandseaelliotr extends APP_GameAction
         self::ajaxResponse();
     }
 
+    public function playFaceDown()
+    {
+        self::setAjaxMode();
+        $dest_theatre = self::getArg("dest_theatre", AT_alphanum);
+
+        if ($dest_theatre === null) {
+            $this->game->updatePlayerNoAction();
+            $this->game->gamestate->nextState("");
+            self::error("playFaceDown nothing happened wop wop");
+        } else {
+            $this->game->playFaceDown($dest_theatre);
+        }
+
+        self::ajaxResponse();
+    }
+
 
 /*
 Example:

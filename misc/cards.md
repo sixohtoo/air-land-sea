@@ -25,14 +25,16 @@
 
 
 ## stuff left
-* Air 2 (next card to non matching)             !!
-* Land 1 (Draw and play facedown)               !!!
-* Land 5 (you flip, then opponent flips)        !!
+* Land 1 (Draw and play facedown)               !!
+* Land 5 (you flip, then opponent flips)        !!!
 * Sea 4 (pick ujp facedown and play another)    !!
 * 
 
 ## TODO
 * flipping opponents card doesnt cause animation (gotta refresh)
+* Playing facedown card should send different notification to players
+    * Active player should see what card was placed in sidebar, non active player should see 'a facedown card'
+* Refreshing in between states (e.g. playFaceDown crashes)
 
 ## stuff to code
 * move cards (1) -> choose card + theatre
